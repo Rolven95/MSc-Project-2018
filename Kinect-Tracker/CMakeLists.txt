@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 2.8)
 cmake_policy (SET CMP0048 NEW)
 
 project (
-	Urban-Planner
+	KinectTracker
 	VERSION
 		1.0
 	LANGUAGES
@@ -28,7 +28,7 @@ if (BUILD_INSTALLER)
 
 set (
 	INSTALLER_NAME
-		My-Program-Installer
+		KinectTracker-Installer
 )
 
 set (
@@ -58,31 +58,31 @@ endif()
 
 # Specify that we want to build the tracker library
 add_subdirectory (
-	"src/exampleLib"
+	"src/HandTrackerLib"
 )
 
-add_executable (
-      main
-      "src/main.cpp"
-)
+#add_executable (
+#      main
+#      "src/main.cpp"
+#)
 
-target_include_directories (
-	main
-	PRIVATE
-		"src/exampleLib/include"
-)
+#target_include_directories (
+#	main
+#	PRIVATE
+#		"src/exampleLib/include"
+#)
 
-target_link_libraries (
-	main
-	PUBLIC
-		ExampleLib
-)
+#target_link_libraries (
+#	main
+#	PUBLIC
+#		ExampleLib
+#)
 
-# Again, install the executable so it can be run easily
-install (
-	TARGETS
-		main
-	RUNTIME
-	DESTINATION
-		${CMAKE_SOURCE_DIR}/exe
-)
+## Again, install the executable so it can be run easily
+#install (
+#	TARGETS
+#		main
+#	RUNTIME
+#	DESTINATION
+#		${CMAKE_SOURCE_DIR}/exe
+#)
