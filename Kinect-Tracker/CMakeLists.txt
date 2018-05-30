@@ -61,6 +61,10 @@ add_subdirectory (
 	"src/HandTrackerLib"
 )
 
+add_subdirectory (
+	"src/HandTracking"
+)
+
 #add_executable (
 #      main
 #      "src/main.cpp"
