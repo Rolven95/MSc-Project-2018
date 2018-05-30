@@ -9,6 +9,6 @@ if __name__ == '__main__':
 	shutil.rmtree('build', ignore_errors=True)
 	os.mkdir('bin')
 	os.chdir('bin')
-	call(['cmake', '..', '-G', '"Visual Studio 14 2015 Win64"']) # You will have to change this depending on your version of Visual Studio
+	call(['cmake', '..', '-G', 'Visual Studio 14 2015 Win64']) # You will have to change this depending on your version of Visual Studio
 	call(['cmake', '--build', '.'])
 	call(['cmake', '--build', '.', '--target', 'INSTALL'])

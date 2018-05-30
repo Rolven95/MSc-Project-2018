@@ -1,2 +1,2 @@
-# QR-Detector
-Put your README information here
+# Kinect Tracker
+This project implements a hand tracking library that uses the Kinect for sensing and OpenCV for processing

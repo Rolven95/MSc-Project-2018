@@ -551,14 +551,17 @@ namespace ar_sandbox
 				cv::Point statePoint = cv::Point(centroid.x, centroid.y - 20);
 
 				/**
-				  * For some reason, the HersheyFonts text is missing in my installation of OpenCV.
-				  * We need to check this
+				  * Dan: May 30th 2018
+				  *
+				  * The compiler didn't seem to like these lines.
+				  * Perhaps the latest version of OpenCV has removed the HersheyFonts library?
+				  * This will need investigation
 				  */
 				//std::cout << handStr << std::endl;
-				//cv::putText(processedFrameMat, centroidStr, centroid,
-				//	cv::HersheyFonts::FONT_HERSHEY_COMPLEX, 0.5, color);
-				//cv::putText(processedFrameMat, stateStr, statePoint,
-				//	cv::HersheyFonts::FONT_HERSHEY_COMPLEX, 0.5, color);
+				// cv::putText(processedFrameMat, centroidStr, centroid,
+				// 	cv::HersheyFonts::FONT_HERSHEY_COMPLEX, 0.5, color);
+				// cv::putText(processedFrameMat, stateStr, statePoint,
+				// 	cv::HersheyFonts::FONT_HERSHEY_COMPLEX, 0.5, color);
 			}
 		}
 	}
