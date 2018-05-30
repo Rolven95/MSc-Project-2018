@@ -92,3 +92,5 @@ install (
 	DESTINATION
 		${CMAKE_SOURCE_DIR}/exe
 )
+
+# TODO: Copy over the OpenCV dlls too
