@@ -48,6 +48,7 @@ set (
 	"HandTracker.cpp"
 	"Hand.cpp"
 	"KinectManager.cpp"
+	"Unity.cpp"
 )
 
 set (
@@ -57,6 +58,7 @@ set (
 	"include/Hand.h"
 	"include/KinectManager.h"
 	"include/KinectTypes.h"
+	"include/Unity.h"
 )
 
 add_library (

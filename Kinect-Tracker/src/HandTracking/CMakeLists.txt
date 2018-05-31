@@ -13,18 +13,11 @@ find_package (
 set (
 	HANDTRACKINGTESTAPP_SOURCES
 	TestApp.cpp
-	Unity.cpp
-)
-
-set (
-	HANDTRACKINGTESTAPP_HEADERS
-	"include/Unity.h"
 )
 
 add_executable (
 	HandTrackingTestApp
 	${HANDTRACKINGTESTAPP_SOURCES}
-	${HANDTRACKINGTESTAPP_HEADERS}
 )
 
 add_custom_command (
