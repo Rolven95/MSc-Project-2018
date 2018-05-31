@@ -21,6 +21,7 @@ namespace ar_sandbox
 	template <typename T> class HANDTRACKER_API  DepthFrameProcessor;
 	class HANDTRACKER_API DepthFrameResizer;
 	class HANDTRACKER_API HandTracker;
+	class HANDTRACKER_API Hand;
 }
 
 #include "KinectTypes.h"

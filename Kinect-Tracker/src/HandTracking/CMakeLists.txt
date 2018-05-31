@@ -1,3 +1,15 @@
+# First, go find the OpenCV binary directory
+list (
+	APPEND
+	CMAKE_MODULE_PATH
+	"${CMAKE_SOURCE_DIR}/cmake"
+)
+
+find_package (
+	OpenCVBinFiles
+	REQUIRED
+)
+
 set (
 	HANDTRACKINGTESTAPP_SOURCES
 	TestApp.cpp
@@ -13,6 +25,14 @@ add_executable (
 	HandTrackingTestApp
 	${HANDTRACKINGTESTAPP_SOURCES}
 	${HANDTRACKINGTESTAPP_HEADERS}
+)
+
+add_custom_command (
+	TARGET
+		HandTrackingTestApp
+	POST_BUILD
+	COMMAND
+		${CMAKE_COMMAND} -DCOMPONENT=opencv -P ${CMAKE_BINARY_DIR}/cmake_install.cmake 
 )
 
 link_directories (
@@ -41,4 +61,17 @@ install (
 	RUNTIME
 	DESTINATION
 		${CMAKE_SOURCE_DIR}/exe
+)
+
+# Copy over the OpenCV dlls
+install (
+	DIRECTORY
+		${OpenCV_BIN_DIR}/
+	DESTINATION
+		${CMAKE_SOURCE_DIR}/exe
+	COMPONENT
+		opencv
+	FILES_MATCHING
+	PATTERN
+		"*.dll"
 )

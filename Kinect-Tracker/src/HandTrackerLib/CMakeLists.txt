@@ -37,6 +37,11 @@ find_package (
 	REQUIRED
 )
 
+find_package (
+	OpenCVBinFiles
+	REQUIRED
+)
+
 set (
 	HANDTRACKER_SOURCES
 	"HandTrackerLib.cpp"
@@ -92,5 +97,3 @@ install (
 	DESTINATION
 		${CMAKE_SOURCE_DIR}/exe
 )
-
-# TODO: Copy over the OpenCV dlls too
