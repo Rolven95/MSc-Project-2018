@@ -19,10 +19,13 @@ int main(int argc, char **argv)
 
 #if defined(DO_TEST_APP)
 
-	cv::namedWindow("Kinect display", 1);
+	cv::namedWindow("Depth display");
+	cv::namedWindow("Color display");
+	cv::namedWindow("HandTracker display");
 
 	BYTE *bp = nullptr;
-	unsigned short *sp = nullptr;
+	unsigned short *depthsp = nullptr;
+	BYTE *colorsp = nullptr;
 	int *intP = new int;
 
 	initEnv();
@@ -34,10 +37,20 @@ int main(int argc, char **argv)
 		updateHandTracker();
 
 		getContourFrame(&bp, intP);
-		getDepthFrame(&sp, intP);
+		getDepthFrame(&depthsp, intP);
+		getColorFrame(&colorsp, intP);
 
-		cv::Mat temp(512, 512, CV_8UC3, bp);
-		imshow("Kinect display", temp);
+		// Show all three frames in separate windows
+		cv::Mat depthFrame(512, 512, CV_16U, depthsp);
+		imshow("Depth display", depthFrame);
+		if (cv::waitKey(1) >= 0) break;
+
+		cv::Mat colorFrame(512, 512, CV_8UC4, colorsp);
+		imshow("Color display", colorFrame);
+		if (cv::waitKey(1) >= 0) break;
+
+		cv::Mat contourFrame(512, 512, CV_8UC3, bp);
+		imshow("HandTracker display", contourFrame);
 		if (cv::waitKey(1) >= 0) break;
 	}
 

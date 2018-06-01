@@ -7,13 +7,15 @@
 #define RESIZE_HEIGHT 512
 
 using SensorManager = boost::shared_ptr<ar_sandbox::KinectManager>;
-using Resizer = boost::shared_ptr<ar_sandbox::DepthFrameResizer>;
+using DepthResizer = boost::shared_ptr<ar_sandbox::DepthFrameResizer>;
+using ColorResizer = boost::shared_ptr<ar_sandbox::ColorFrameResizer>;
 using HandTracker = boost::shared_ptr<ar_sandbox::HandTracker>;
 
 static int RES = 0;
 static bool isInited = false;
 static SensorManager sensorManager;
-static Resizer resizer;
+static DepthResizer depthResizer;
+static ColorResizer colorResizer;
 static HandTracker handTracker;
 
 //static int RES = 0;
@@ -26,7 +28,9 @@ static HandTracker handTracker;
 // Don't ever do this, but I'm also going to some
 // an OpenCV matrices lying around as the depth frame buffer
 
+static boost::shared_ptr<BYTE[]> colorFrameBuffer;
 static boost::shared_ptr<unsigned short[]> depthFrameBuffer;
+static boost::shared_ptr<unsigned short[]> depthFrameBufferClone;
 static boost::shared_ptr<BYTE[]> contourFrameBuffer;
 
 // Environment management
@@ -35,15 +39,19 @@ void initEnv()
 	if (!isInited)
 	{
 		sensorManager = boost::make_shared<ar_sandbox::KinectManager>();
-		resizer = boost::make_shared<ar_sandbox::DepthFrameResizer>();
+		depthResizer = boost::make_shared<ar_sandbox::DepthFrameResizer>();
+		colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
 
 		// Hand tracker needs special attention
-		resizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
-		cv::Size processParams = resizer->getSizeParameters();
+		depthResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
+		colorResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
+		cv::Size processParams = depthResizer->getSizeParameters(); // Both have the same params, so the depth one is representative of both
 		handTracker = boost::make_shared<ar_sandbox::HandTracker>(processParams);
 
 		// Create the static buffers
+		colorFrameBuffer = boost::make_shared<BYTE[]>(processParams.width * processParams.height * 4); // RGBA data
 		depthFrameBuffer = boost::make_shared<unsigned short[]>(processParams.width * processParams.height);
+		depthFrameBufferClone = boost::make_shared<unsigned short[]>(processParams.width * processParams.height);
 		contourFrameBuffer = boost::make_shared<BYTE[]>(processParams.width * processParams.height * 3); // RGB data
 
 		// Start the sensor
@@ -59,7 +67,8 @@ void destroyEnv()
 	if (isInited)
 	{
 		handTracker.reset();
-		resizer.reset();
+		depthResizer.reset();
+		colorResizer.reset();
 		sensorManager.reset();
 
 		isInited = false;
@@ -87,7 +96,9 @@ void updateProcessor()
 	{
 		// Process the current frame from the sensor manager
 		cv::Mat depthFrame = sensorManager->getDepthMat();
-		resizer->processFrame(depthFrame);
+		cv::Mat colorFrame = sensorManager->getColorMat();
+		depthResizer->processFrame(depthFrame);
+		colorResizer->processFrame(colorFrame);
 	}
 }
 
@@ -96,8 +107,10 @@ void updateHandTracker()
 	if (isInited)
 	{
 		// Ask the processor for its latest frame and pass it through the handtracker
-		cv::Mat depthFrame = resizer->getFrame();
-		handTracker->processFrame(depthFrame);
+		// cv::Mat depthFrame = depthResizer->getFrame();
+		cv::Mat depthMatClone = cv::Mat(512, 512, CV_16U, depthFrameBufferClone.get());
+		depthResizer->copyFrameBuffer(depthMatClone);
+		handTracker->processFrame(depthMatClone);
 	}
 }
 
@@ -106,7 +119,8 @@ void setResizeProcessorParams(int width, int height)
 {
 	if (isInited)
 	{
-		resizer->setResizeParameters(width, height);
+		depthResizer->setResizeParameters(width, height);
+		colorResizer->setResizeParameters(width, height);
 	}
 }
 
@@ -116,10 +130,26 @@ bool getDepthFrame(unsigned short **interOpPtr, int *frameLength)
 	if (isInited)
 	{
 		cv::Mat depthMat = cv::Mat(512, 512, CV_16U, depthFrameBuffer.get());
-		resizer->copyFrameBuffer(depthMat);
+		depthResizer->copyFrameBuffer(depthMat);
 
 		*interOpPtr = depthFrameBuffer.get();
 		*frameLength = depthMat.rows * depthMat.cols;
+
+		return true;
+	}
+
+	return false; // Return false if we aren't even inited
+}
+
+bool getColorFrame(BYTE **interOpPtr, int *frameLength)
+{
+	if (isInited)
+	{
+		cv::Mat colorMat = cv::Mat(512, 512, CV_8UC4, colorFrameBuffer.get());
+		colorResizer->copyFrameBuffer(colorMat);
+
+		*interOpPtr = colorFrameBuffer.get();
+		*frameLength = colorMat.rows * colorMat.cols;
 
 		return true;
 	}

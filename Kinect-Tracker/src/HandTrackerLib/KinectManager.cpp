@@ -196,5 +196,34 @@ namespace ar_sandbox
 	{
 		cv::resize(depthFrame, processedFrameMat, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
 	}
+
+	/////////////////////////////////////////////////
+	/////////////////////////////////////////////////
+	/////////////////////////////////////////////////
+
+	ColorFrameResizer::ColorFrameResizer()
+		: DepthFrameProcessor(512, 512)
+	{
+		processedBuffer = boost::make_shared<BYTE[]>(width * height);
+		processedFrameMat = cv::Mat(width, height, CV_8UC4, processedBuffer.get());
+	}
+
+	void ColorFrameResizer::setResizeParameters(int w, int h)
+	{
+		width = w;
+		height = h;
+		
+		// Clear and then reallocate the buffer
+		processedBuffer.reset();
+		processedBuffer = boost::make_shared<BYTE[]>(width * height * 4);
+		processedFrameMat = cv::Mat(width, height, CV_8UC4, processedBuffer.get());
+	}
+
+	// This function copies the raw depth frame data then
+	// interpolates it up to size
+	void ColorFrameResizer::processFrame(cv::Mat & colorFrame)
+	{
+		cv::resize(colorFrame, processedFrameMat, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
+	}
 }
 
