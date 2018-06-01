@@ -14,14 +14,14 @@ find_package (
 )
 
 # Simply uses the baked in find facility for boost
-#set (
-#	BOOSTROOT
-#	"${CMAKE_SOURCE_DIR}/dependencies/boost_1_67_0"
-#)
+set (
+	BOOSTROOT
+	"C:/local/boost_1_67_0"
+)
 
 find_package (
 	Boost
-	1.67
+	1.67.0
 	REQUIRED
 )
 
