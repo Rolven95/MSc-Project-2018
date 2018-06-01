@@ -5,18 +5,18 @@ cmake_minimum_required (VERSION 2.8)
 cmake_policy (SET CMP0048 NEW)
 
 project (
-	Urban-Planner
+	Unity-Updater-Project
 	VERSION
 		1.0
 	LANGUAGES
-		CXX
+		NONE
 )
 
 # Change this to whatever you want to call your built application
 # It will also set the name of the product installer built with NSIS
 set (
 	AUTO_APP_NAME
-		DanDan's-Application
+		Unity-Application
 )
 
 option (
@@ -56,33 +56,48 @@ add_custom_target (
 
 endif()
 
-# Specify that we want to build the tracker library
-add_subdirectory (
-	"src/qr-tracker-lib"
+#
+# The Unity Updater template is only supported on OSX and Windows
+#
+
+if (APPLE) # We only support OSX or Windows, both 64 bit
+
+add_custom_target (
+	${AUTO_APP_NAME}
+	ALL
+	COMMAND
+		/Applications/Unity/Unity.app/Contents/MacOS/Unity
+		-quit
+		-batchmode
+		-logFile ${CMAKE_BINARY_DIR}/logs/Editor.log
+		-projectPath ${CMAKE_SOURCE_DIR}/Unity/
+	COMMENT
+		"Building ${AUTO_APP_NAME}..."
 )
 
-add_executable (
-      main
-      "src/main.cpp"
+elseif (WIN32) # We only support OSX or Windows, both 64 bit
+
+add_custom_target (
+	${AUTO_APP_NAME}
+	ALL
+	COMMAND
+		"C:/Program Files/Unity/Editor/Unity.exe"
+		-quit
+		-batchmode
+		-projectPath ${CMAKE_SOURCE_DIR}/Unity
+		-buildWindows64Player
+		${CMAKE_SOURCE_DIR}/build/${AUTO_APP_NAME}.exe
+	COMMENT
+		"Building ${AUTO_APP_NAME}..."		
 )
 
-target_include_directories (
-	main
-	PRIVATE
-		"src/qr-tracker-lib/include"
+else () # Just echo a statement on any other system
+
+add_custom_target (
+	${AUTO_APP_NAME}
+	ALL
+	COMMAND
+		echo "Only supported on OSX and Windows, soz!"
 )
 
-target_link_libraries (
-	main
-	PUBLIC
-		QRTrackerLib
-)
-
-# Again, install the executable so it can be run easily
-install (
-	TARGETS
-		main
-	RUNTIME
-	DESTINATION
-		${CMAKE_SOURCE_DIR}/exe
-)
+endif()
