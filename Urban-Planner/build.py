@@ -11,4 +11,3 @@ if __name__ == '__main__':
 	os.chdir('bin')
 	call(['cmake', '..'])
 	call(['cmake', '--build', '.'])
-	call(['cmake', '--build', '.', '--target', 'INSTALL'])
