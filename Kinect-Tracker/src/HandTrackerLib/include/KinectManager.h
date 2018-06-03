@@ -137,4 +137,18 @@ namespace ar_sandbox
 		cv::Size getSizeParameters() { return cv::Size(width, height); }
 		void setResizeParameters(int w, int h);
 	};
+
+	class ColorFrameResizer : public DepthFrameProcessor<BYTE>
+	{
+	public:
+
+		ColorFrameResizer();
+		~ColorFrameResizer()
+		{}
+
+		void processFrame(cv::Mat &colorFrame);
+
+		cv::Size getSizeParameters() { return cv::Size(width, height); }
+		void setResizeParameters(int w, int h);
+	};
 }
