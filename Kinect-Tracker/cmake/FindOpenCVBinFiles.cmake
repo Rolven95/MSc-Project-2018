@@ -3,9 +3,19 @@
 # --------------
 # Use this to find the opencv binary files (dlls) on Windows 64-Bit systems for Windows 64-Bit systems.
 # This will *not* work for OSX, and will not fetch the required files for building java/android applications etc.
-# 
-# @author Daniel J. Finnegan
-# @date May 2018
+#
+#=============================================================================
+# Copyright 2018 Daniel J. Finnegan
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distribute this file outside of CMake, substitute the full
+#  License text for the above reference.)
 
 
 file (
@@ -33,7 +43,10 @@ if (${OpenCV_BIN_DIR})
 
   set (
     OpenCV_BIN_DIR_found
-    TRUE
+    true
+    CACHE
+    BOOL
+    "OpenCV x64 binary directory"
   )
 
 endif ()
