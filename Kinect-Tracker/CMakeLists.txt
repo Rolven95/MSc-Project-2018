@@ -65,28 +65,6 @@ add_subdirectory (
 	"src/HandTracking"
 )
 
-#add_executable (
-#      main
-#      "src/main.cpp"
-#)
-
-#target_include_directories (
-#	main
-#	PRIVATE
-#		"src/exampleLib/include"
-#)
-
-#target_link_libraries (
-#	main
-#	PUBLIC
-#		ExampleLib
-#)
-
-## Again, install the executable so it can be run easily
-#install (
-#	TARGETS
-#		main
-#	RUNTIME
-#	DESTINATION
-#		${CMAKE_SOURCE_DIR}/exe
-#)
+add_subdirectory (
+	"src/QR"
+)
