@@ -163,8 +163,7 @@ if (NOT UnityGame_FOUND)
 					""
 				)
 
-			else
-
+			else ()
 			
 				set (
 					UnityGame_FOUND
