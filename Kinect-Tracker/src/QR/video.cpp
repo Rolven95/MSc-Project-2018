@@ -64,11 +64,12 @@ int main ( int argc, char **argv )
 	int align,orientation;
 
 	int DBG=1;						// Debug Flag
-
+	int framenumber = 0; //debug frame number
 	int key = 0;
 	while(key != 'q')				// While loop to query for Image Input frame
 	{
-
+		framenumber++;
+		printf("\nFrame Number: %d  ", framenumber);
 		traces = Scalar(0,0,0);
 		qr_raw = Mat::zeros(100, 100, CV_8UC3 );
 	   	qr = Mat::zeros(100, 100, CV_8UC3 );
@@ -102,36 +103,50 @@ int main ( int argc, char **argv )
 		// 2. Alternately, the Ratio of areas of the "concentric" squares can also be used for identifying base Alignment markers.
 		// The below demonstrates the first method
 		
+		int id[50];
+		for (int i=0; i < 50; i++)
+			id[i] = -1;
+
 		for( int i = 0; i < contours.size(); i++ )
 		{	
 		        //Find the approximated polygon of the contour we are examining
 		        approxPolyDP(contours[i], pointsseq, arcLength(contours[i], true)*0.02, true);  
 		        if (pointsseq.size() == 4)      // only quadrilaterals contours are examined
 		        { 
-				int k=i;
-				int c=0;
+					int k=i;
+					int c=0;
 	
-				while(hierarchy[k][2] != -1)
-				{
-					k = hierarchy[k][2] ;
+					while(hierarchy[k][2] != -1)
+					{
+						k = hierarchy[k][2] ;
+						c = c+1;
+					}
+					if(hierarchy[k][2] != -1)
 					c = c+1;
-				}
-				if(hierarchy[k][2] != -1)
-				c = c+1;
-	
-				if (c >= 5)
-				{	
-					if (mark == 0)		A = i;
-					else if  (mark == 1)	B = i;		// i.e., A is already found, assign current contour to B
-					else if  (mark == 2)	C = i;		// i.e., A and B are already found, assign current contour to C
-					mark = mark + 1 ;
-				}
+		
+					if (c >= 5)
+					{	
+						//if (mark == 0)		A = i;
+						//else if  (mark == 1)	B = i;		// i.e., A is already found, assign current contour to B
+						//else if  (mark == 2)	C = i;		// i.e., A and B are already found, assign current contour to C
+						id[mark] = i;
+						mark = mark + 1 ;
+					}
 		        }
+				//int idnumber=0;
+				//for (int i = 0; id[i] != -1; i++) 
+				//{
+				//	idnumber = i;
+				//	printf("idnumber=%d", idnumber);
+				//}
+					
 		} 
-
 		
 		if (mark >= 3)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
 		{
+			A = id[0];
+			B = id[1];
+			C = id[2];
 			// We have found the 3 markers for the QR code; Now we need to determine which of them are 'top', 'right' and 'bottom' markers
 
 			// Determining the 'top' marker
