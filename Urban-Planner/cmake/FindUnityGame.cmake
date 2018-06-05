@@ -153,7 +153,7 @@ if (NOT UnityGame_FOUND)
 
 		if(UnityGame_FIND_VERSION_EXACT)
 
-			if (${UnityGame_VERSION_STRING} VERSION_LESS ${UnityGame_FIND_VERSION})
+			if (NOT ${UnityGame_VERSION_STRING} VERSION_EQUAL ${UnityGame_FIND_VERSION})
 
 				set (
 					UnityGame_FOUND
@@ -174,6 +174,18 @@ if (NOT UnityGame_FOUND)
 				)
 
 			endif ()
+
+		endif ()
+
+		if (${UnityGame_VERSION_STRING} VERSION_LESS ${UnityGame_FIND_VERSION})
+
+			set (
+				UnityGame_FOUND
+				false
+				CACHE
+				BOOL
+				""
+			)
 
 		endif ()
 
