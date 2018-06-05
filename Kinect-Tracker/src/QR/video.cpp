@@ -2,6 +2,7 @@
 // Program : OpenCV based QR code Detection and Retrieval
 // Author  : Bharath Prabhuswamy
 //______________________________________________________________________________________
+#define idnumber 30
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -23,7 +24,7 @@ void cv_updateCorner(Point2f P, Point2f ref ,float& baseline,  Point2f& corner);
 void cv_updateCornerOr(int orientation, vector<Point2f> IN, vector<Point2f> &OUT);
 bool getIntersectionPoint(Point2f a1, Point2f a2, Point2f b1, Point2f b2, Point2f& intersection);
 float cross(Point2f v1,Point2f v2);
-
+// void qrdetection(int ilist[50],int qrlist[15][3]);
 // Start of Main Loop
 //------------------------------------------------------------------------------------------------------------------------
 int main ( int argc, char **argv )
@@ -69,7 +70,7 @@ int main ( int argc, char **argv )
 	while(key != 'q')				// While loop to query for Image Input frame
 	{
 		framenumber++;
-		printf("\nFrame Number: %d  ", framenumber);
+		printf("\n Frame Number: %d  ", framenumber);
 		traces = Scalar(0,0,0);
 		qr_raw = Mat::zeros(100, 100, CV_8UC3 );
 	   	qr = Mat::zeros(100, 100, CV_8UC3 );
@@ -103,11 +104,15 @@ int main ( int argc, char **argv )
 		// 2. Alternately, the Ratio of areas of the "concentric" squares can also be used for identifying base Alignment markers.
 		// The below demonstrates the first method
 		
-		int id[50];
-		for (int i=0; i < 50; i++)
+		int id[idnumber];
+		int qrcode[idnumber/3][3];
+		for (int i=0; i < idnumber; i++)
 			id[i] = -1;
-
-		for( int i = 0; i < contours.size(); i++ )
+		for (int i = 0; i < 15; i++)
+			qrcode[i][0] = -1;
+		
+		//count all identifiers, and store in id[];
+		for( int i = 0; i < contours.size(); i++ ) 
 		{	
 		        //Find the approximated polygon of the contour we are examining
 		        approxPolyDP(contours[i], pointsseq, arcLength(contours[i], true)*0.02, true);  
@@ -115,7 +120,6 @@ int main ( int argc, char **argv )
 		        { 
 					int k=i;
 					int c=0;
-	
 					while(hierarchy[k][2] != -1)
 					{
 						k = hierarchy[k][2] ;
@@ -126,27 +130,66 @@ int main ( int argc, char **argv )
 		
 					if (c >= 5)
 					{	
-						//if (mark == 0)		A = i;
-						//else if  (mark == 1)	B = i;		// i.e., A is already found, assign current contour to B
-						//else if  (mark == 2)	C = i;		// i.e., A and B are already found, assign current contour to C
 						id[mark] = i;
 						mark = mark + 1 ;
 					}
 		        }
-				//int idnumber=0;
-				//for (int i = 0; id[i] != -1; i++) 
-				//{
-				//	idnumber = i;
-				//	printf("idnumber=%d", idnumber);
-				//}
-					
 		} 
 		
+		float alldistance[idnumber][idnumber - 1]; //theorical maxium size
+		for (int i = 0; i < mark ; i++)  //actrual reading
+		{
+			for (int q = 0; q < mark; q++) 
+			{
+				alldistance[i][q] = cv_distance(mc[id[i]], mc[id[q]]);
+				//printf("  %d%d = %f  ", i, q, alldistance[i][q]);
+			}
+		}
+		int qrcounter = 0; //how many qr codes, should be mark/3
+		for (int i = 0; i < mark; i++) //check all points
+		{
+			//alldistance[i][i] = -1;
+			if (alldistance[i][0] != -1) {
+				int min1 = -1;
+				int min2 = -1;
+				for (int m = 0; m < mark; m++) { //give min1 and min2 initial value, non-zero value
+					if (min1 == -1 && m != i  && alldistance[m][0] != -1)
+						min1 = m;
+					else if (min2 == -1 && m != i  && alldistance[m][0] != -1)
+						min2 = m;
+				}
+				if (min1 == -1 || min2 == -1)
+					continue;
+
+				for (int q = i; q < mark ; q++) {
+					if (alldistance[i][q] != -1 && alldistance[i][q] < alldistance[i][min1] && q!=i && q!=min2) {
+						min1 =q;
+					}else if(alldistance[i][q] != -1 && alldistance[i][q] < alldistance[i][min2] && q != i && q!=min1) {
+						min2 = q;
+					}
+				}
+				alldistance[i][0] = -1;
+				alldistance[min1][0] = -1;
+				alldistance[min2][0] = -1;
+				qrcode[qrcounter][0] = i;
+				qrcode[qrcounter][1] = min1;
+				qrcode[qrcounter][2] = min2;
+				
+				printf(" Total %d,Code:%d Points: %d %d %d ", mark, qrcounter, i, min1, min2);
+				qrcounter++;
+			}
+		}
+
 		if (mark >= 3)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
 		{
-			A = id[0];
-			B = id[1];
-			C = id[2];
+		//qr detection O=n^2
+			
+
+		//qr dectection
+		
+			A = id[qrcode[0][0]];
+			B = id[qrcode[0][1]];
+			C = id[qrcode[0][2]];
 			// We have found the 3 markers for the QR code; Now we need to determine which of them are 'top', 'right' and 'bottom' markers
 
 			// Determining the 'top' marker
