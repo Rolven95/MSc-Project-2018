@@ -10,7 +10,7 @@
 #include <iostream>
 #include <cmath>
 #include "KinectManager.h"
-
+#include <omp.h>
 using namespace cv;
 using namespace std;
 
@@ -52,12 +52,12 @@ int main(int argc, char **argv)
 	// Starts kinect
 	kinectManager->initSensor();
 
-	//Mat image = imread(argv[1]);
 	Mat image;
 
 	// Creation of Intermediate 'Image' Objects required later
 	Mat gray(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
 	Mat edges(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
+
 	Mat traces(RESIZE_WIDTH, RESIZE_WIDTH,CV_8UC3);								// For Debug Visuals
 	Mat qr,qr_raw,qr_gray,qr_thres;
 	    
@@ -75,10 +75,10 @@ int main(int argc, char **argv)
 		framenumber++;
 		printf("\n Frame Number: %d  ", framenumber);
 		traces = Scalar(0,0,0);
-		qr_raw = Mat::zeros(100, 100, CV_8UC3 );
-	   	qr = Mat::zeros(100, 100, CV_8UC3 );
-		qr_gray = Mat::zeros(100, 100, CV_8UC1);
-	   	qr_thres = Mat::zeros(100, 100, CV_8UC1);		
+		qr_raw = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
+	   	qr = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
+		qr_gray = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC1);
+	   	qr_thres = Mat::zeros(100, 100, CV_8UC1);
 		
 		// Get the next frame from the Kinect
 		do
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
 		// Get Moments for all Contours and the mass centers
 		vector<Moments> mu(contours.size());
 		vector<Point2f> mc(contours.size());
-
+#pragma omp parallel for  
 		for (int i = 0; i < contours.size(); i++)
 		{
 			mu[i] = moments(contours[i], false);
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 			id[i] = -1;
 		for (int i = 0; i < idnumber / 3; i++)
 			qrcode[i][0] = -1;
-
+//#pragma omp parallel for  
 		for (int i = 0; i < contours.size(); i++)
 		{
 			//Find the approximated polygon of the contour we are examining
@@ -173,6 +173,7 @@ int main(int argc, char **argv)
 		float alldistance[idnumber][idnumber]; //theorical maxium size
 		float smalldistance = 9999;
 
+#pragma omp parallel for  
 		for (int i = 0; i < mark; i++)  //actrual reading
 		{
 			for (int q = 0; q < mark; q++)
@@ -186,6 +187,7 @@ int main(int argc, char **argv)
 		//printf(" small dis = %f ", smalldistance);
 
 		int qrcounter = 0; //how many qr codes, should be mark/3
+//#pragma omp parallel for  		
 		for (int i = 0; i < mark; i++) //check all points
 		{
 			//alldistance[i][i] = -1;
@@ -247,6 +249,7 @@ int main(int argc, char **argv)
 
 		if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
 		{
+#pragma omp parallel for  
 			for (int i = 0; i < qrcounter; i++) {
 
 				float dist, slope;
