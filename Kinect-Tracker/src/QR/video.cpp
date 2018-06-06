@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 	ColorResizer colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
 
 	// initialize the variables we care about
-	colorResizer->setResizeParameters(1024, 512);
+	colorResizer->setResizeParameters(512, 512);
 	colorFrameBuffer = boost::make_shared<BYTE[]>(colorResizer->getSizeParameters().width * colorResizer->getSizeParameters().height * 4); // RGBA data	
 
 	// Starts kinect
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 	// Creation of Intermediate 'Image' Objects required later
 	Mat gray(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
 	Mat edges(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
-	Mat traces(image.size(), CV_8UC3);								// For Debug Visuals
+	Mat traces(512,512,CV_8UC3);								// For Debug Visuals
 	Mat qr,qr_raw,qr_gray,qr_thres;
 	    
 	vector<vector<Point> > contours;
@@ -138,15 +138,10 @@ int main(int argc, char **argv)
 		cv::Mat colorFrame = kinectManager->getColorMat();
 		colorResizer->processFrame(colorFrame);
 
-		cv::Mat colorMat = cv::Mat(512, 512, CV_8UC4, colorFrameBuffer.get());
-		colorResizer->copyFrameBuffer(colorMat);
+		cv::Mat image = cv::Mat(512, 512, CV_8UC4, colorFrameBuffer.get());
+		colorResizer->copyFrameBuffer(image);
 
 		// From here, you can do all your QR processing on colorMat
-
-		// Show the color fram
-		//imshow("Color display", colorMat);
-
-		image = colorMat;
 
 
 		cvtColor(image,gray,CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale	
@@ -332,7 +327,7 @@ int main(int argc, char **argv)
 				Point2f N;	
 
 				vector<Point2f> src,dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
-												// dst - Destination Points to transform overlay image	
+												// dst - Destination Points to transform overlay image
 
 				Mat warp_matrix;
 
@@ -386,9 +381,9 @@ int main(int argc, char **argv)
 						circle( traces, Point(10,20) , 5 ,  Scalar(255,255,255), -1, 8, 0 );
 						
 					// Draw contours on Trace image for analysis	
-					drawContours( traces, contours, top , Scalar(255,0,100), 1, 8, hierarchy, 0 );
+					/*drawContours( traces, contours, top , Scalar(255,0,100), 1, 8, hierarchy, 0 );
 					drawContours( traces, contours, right , Scalar(255,0,100), 1, 8, hierarchy, 0 );
-					drawContours( traces, contours, bottom , Scalar(255,0,100), 1, 8, hierarchy, 0 );
+					drawContours( traces, contours, bottom , Scalar(255,0,100), 1, 8, hierarchy, 0 );*/
 
 					// Draw points (4 corners) on Trace image for each Identification marker	
 					circle( traces, L[0], 2,  Scalar(255,255,0), -1, 8, 0 );
@@ -437,16 +432,20 @@ int main(int argc, char **argv)
 					// Debug Prints
 				}
 
-			}
+			}		
 		}
 	
 		imshow ( "Image", image );
-		//imshow ( "Traces", traces );
+		imshow ( "Traces", traces );
 		imshow ( "QR code", qr_thres );
 
 		key = waitKey(1);	// OPENCV: wait for 1ms before accessing next frame
 
 	}	// End of 'while' loop
+
+	// Always clean up because we're in C++ land!
+	colorResizer.reset();
+	kinectManager.reset();
 
 	return 0;
 }
