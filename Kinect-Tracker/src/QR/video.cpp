@@ -56,8 +56,246 @@ int main(int argc, char **argv)
 		// Get the next frame from the Kinect
 		do
 		{
+<<<<<<< HEAD
 			kinectManager->readMultiFrame();
 		} while (kinectManager->getDepthDimensions().width <= 0);
+=======
+			//alldistance[i][i] = -1;
+			if (alldistance[i][0] != -1) {
+				int min1 = -1;
+				int min2 = -1;
+				for (int m = 0; m < mark; m++) { //give min1 and min2 initial value, non-zero value
+					if (min1 == -1 && m != i  && alldistance[m][0] != -1)
+						min1 = m;
+					else if (min2 == -1 && m != i  && alldistance[m][0] != -1)
+						min2 = m;
+				}
+				if (min1 == -1 || min2 == -1)
+					continue;
+
+				for (int q = i; q < mark ; q++) {
+					if (alldistance[i][q] != -1 && alldistance[i][q] < alldistance[i][min1] && q!=i && q!=min2) {
+						min1 =q;
+					}else if(alldistance[i][q] != -1 && alldistance[i][q] < alldistance[i][min2] && q != i && q!=min1) {
+						min2 = q;
+					}
+				}
+				alldistance[i][0] = -1;
+				alldistance[min1][0] = -1;
+				alldistance[min2][0] = -1;
+				qrcode[qrcounter][0] = i;
+				qrcode[qrcounter][1] = min1;
+				qrcode[qrcounter][2] = min2;
+				//printf(" Total %d,Code:%d Points: %d %d %d ", mark, qrcounter, i, min1, min2);
+				qrcounter++;
+			}
+		}
+
+		if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
+		{
+			for (int i = 0; i < qrcounter; i++) {
+
+				A = id[qrcode[i][0]];
+				B = id[qrcode[i][1]];
+				C = id[qrcode[i][2]];
+				// We have found the 3 markers for the QR code; Now we need to determine which of them are 'top', 'right' and 'bottom' markers
+
+				// Determining the 'top' marker
+				// Vertex of the triangle NOT involved in the longest side is the 'outlier'
+
+				AB = cv_distance(mc[A], mc[B]);
+				BC = cv_distance(mc[B], mc[C]);
+				CA = cv_distance(mc[C], mc[A]);
+
+				if (AB > BC && AB > CA)
+				{
+					outlier = C; median1 = A; median2 = B;
+				}
+				else if (CA > AB && CA > BC)
+				{
+					outlier = B; median1 = A; median2 = C;
+				}
+				else if (BC > AB && BC > CA)
+				{
+					outlier = A;  median1 = B; median2 = C;
+				}
+
+				top = outlier;							// The obvious choice
+
+				dist = cv_lineEquation(mc[median1], mc[median2], mc[outlier]);	// Get the Perpendicular distance of the outlier from the longest side			
+				slope = cv_lineSlope(mc[median1], mc[median2], align);		// Also calculate the slope of the longest side
+
+				// Now that we have the orientation of the line formed median1 & median2 and we also have the position of the outlier w.r.t. the line
+				// Determine the 'right' and 'bottom' markers
+
+				if (align == 0)
+				{
+					bottom = median1;
+					right = median2;
+				}
+				else if (slope < 0 && dist < 0)		// Orientation - North
+				{
+					bottom = median1;
+					right = median2;
+					orientation = CV_QR_NORTH;
+				}
+				else if (slope > 0 && dist < 0)		// Orientation - East
+				{
+					right = median1;
+					bottom = median2;
+					orientation = CV_QR_EAST;
+				}
+				else if (slope < 0 && dist > 0)		// Orientation - South			
+				{
+					right = median1;
+					bottom = median2;
+					orientation = CV_QR_SOUTH;
+				}
+
+				else if (slope > 0 && dist > 0)		// Orientation - West
+				{
+					bottom = median1;
+					right = median2;
+					orientation = CV_QR_WEST;
+				}
+
+
+				// To ensure any unintended values do not sneak up when QR code is not present
+				float area_top, area_right, area_bottom;
+
+				if (top < contours.size() && right < contours.size() && bottom < contours.size() && contourArea(contours[top]) > 10 && contourArea(contours[right]) > 10 && contourArea(contours[bottom]) > 10)
+				{
+
+					vector<Point2f> L, M, O, tempL, tempM, tempO;
+					Point2f N;
+
+					vector<Point2f> src, dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
+													// dst - Destination Points to transform overlay image	
+
+					Mat warp_matrix;
+
+					cv_getVertices(contours, top, slope, tempL);
+					cv_getVertices(contours, right, slope, tempM);
+					cv_getVertices(contours, bottom, slope, tempO);
+
+					cv_updateCornerOr(orientation, tempL, L); 			// Re-arrange marker corners w.r.t orientation of the QR code
+					cv_updateCornerOr(orientation, tempM, M); 			// Re-arrange marker corners w.r.t orientation of the QR code
+					cv_updateCornerOr(orientation, tempO, O); 			// Re-arrange marker corners w.r.t orientation of the QR code
+
+					int iflag = getIntersectionPoint(M[1], M[2], O[3], O[2], N);
+
+
+					src.push_back(L[0]);
+					src.push_back(M[1]);
+					src.push_back(N);
+					src.push_back(O[3]);
+
+					dst.push_back(Point2f(0, 0));
+					dst.push_back(Point2f(qr.cols, 0));
+					dst.push_back(Point2f(qr.cols, qr.rows));
+					dst.push_back(Point2f(0, qr.rows));
+
+					if (src.size() == 4 && dst.size() == 4)			// Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
+					{
+						warp_matrix = getPerspectiveTransform(src, dst);
+						warpPerspective(image, qr_raw, warp_matrix, Size(qr.cols, qr.rows));
+						copyMakeBorder(qr_raw, qr, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
+
+						cvtColor(qr, qr_gray, CV_RGB2GRAY);
+						threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
+
+						//threshold(qr_gray, qr_thres, 0, 255, CV_THRESH_OTSU);
+						//for( int d=0 ; d < 4 ; d++){	src.pop_back(); dst.pop_back(); }
+					}
+
+					//Draw contours on the image
+					drawContours(image, contours, top, Scalar(255, 200, 0), 2, 8, hierarchy, 0);
+					drawContours(image, contours, right, Scalar(0, 0, 255), 2, 8, hierarchy, 0);
+					drawContours(image, contours, bottom, Scalar(255, 0, 100), 2, 8, hierarchy, 0);
+
+					// Insert Debug instructions here
+					if (DBG == 1)
+					{
+						// Debug Prints
+						// Visualizations for ease of understanding
+						if (slope > 5)
+							circle(traces, Point(10, 20), 5, Scalar(0, 0, 255), -1, 8, 0);
+						else if (slope < -5)
+							circle(traces, Point(10, 20), 5, Scalar(255, 255, 255), -1, 8, 0);
+
+						// Draw contours on Trace image for analysis	
+						drawContours(traces, contours, top, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+						drawContours(traces, contours, right, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+						drawContours(traces, contours, bottom, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+
+						// Draw points (4 corners) on Trace image for each Identification marker	
+						circle(traces, L[0], 2, Scalar(255, 255, 0), -1, 8, 0);
+						circle(traces, L[1], 2, Scalar(0, 255, 0), -1, 8, 0);
+						circle(traces, L[2], 2, Scalar(0, 0, 255), -1, 8, 0);
+						circle(traces, L[3], 2, Scalar(128, 128, 128), -1, 8, 0);
+
+						circle(traces, M[0], 2, Scalar(255, 255, 0), -1, 8, 0);
+						circle(traces, M[1], 2, Scalar(0, 255, 0), -1, 8, 0);
+						circle(traces, M[2], 2, Scalar(0, 0, 255), -1, 8, 0);
+						circle(traces, M[3], 2, Scalar(128, 128, 128), -1, 8, 0);
+
+						circle(traces, O[0], 2, Scalar(255, 255, 0), -1, 8, 0);
+						circle(traces, O[1], 2, Scalar(0, 255, 0), -1, 8, 0);
+						circle(traces, O[2], 2, Scalar(0, 0, 255), -1, 8, 0);
+						circle(traces, O[3], 2, Scalar(128, 128, 128), -1, 8, 0);
+
+						// Draw point of the estimated 4th Corner of (entire) QR Code
+						circle(traces, N, 2, Scalar(255, 255, 255), -1, 8, 0);
+
+						// Draw the lines used for estimating the 4th Corner of QR Code
+						line(traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
+						line(traces, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
+
+
+						// Show the Orientation of the QR Code wrt to 2D Image Space
+						int fontFace = FONT_HERSHEY_PLAIN;
+
+						if (orientation == CV_QR_NORTH)
+						{
+							putText(traces, "NORTH", Point(20, 30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
+						}
+						else if (orientation == CV_QR_EAST)
+						{
+							putText(traces, "EAST", Point(20, 30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
+						}
+						else if (orientation == CV_QR_SOUTH)
+						{
+							putText(traces, "SOUTH", Point(20, 30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
+						}
+						else if (orientation == CV_QR_WEST)
+						{
+							putText(traces, "WEST", Point(20, 30), fontFace, 1, Scalar(0, 255, 0), 1, 8);
+						}
+
+						// Debug Prints
+					}
+
+				}
+			}
+		}
+	
+		imshow ( "Image", image );
+		imshow ( "Traces", traces );
+		imshow ( "QR code", qr_thres );
+
+		key = waitKey(1);	// OPENCV: wait for 1ms before accessing next frame
+
+	}	// End of 'while' loop
+
+	return 0;
+}
+
+// End of Main Loop
+//--------------------------------------------------------------------------------------
+
+
+// Routines used in Main loops
+>>>>>>> ebdb50cc45cf30b77e86f8365500eac183c5f078
 
 		// Process the color from from the Kinect
 		cv::Mat colorFrame = kinectManager->getColorMat();
