@@ -355,29 +355,37 @@ int main(int argc, char **argv)
 
 					int iflag = getIntersectionPoint(M[1], M[2], O[3], O[2], N);
 
-
+					threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
 					src.push_back(L[0]);
 					src.push_back(M[1]);
 					src.push_back(N);
 					src.push_back(O[3]);
 
-					dst.push_back(Point2f(0, 0));
+
+
+					//float test_grey = cvGetReal2D(gray, i, j);
+					//qr_gray = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC1);
+					//int number = gray
+					//printf(" kkkkk£º%d ",number);
+
+
+					/*dst.push_back(Point2f(0, 0));
 					dst.push_back(Point2f(qr.cols, 0));
 					dst.push_back(Point2f(qr.cols, qr.rows));
-					dst.push_back(Point2f(0, qr.rows));
+					dst.push_back(Point2f(0, qr.rows));*/
 
-					if (src.size() == 4 && dst.size() == 4)			// Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
-					{
-						warp_matrix = getPerspectiveTransform(src, dst);
-						warpPerspective(image, qr_raw, warp_matrix, Size(qr.cols, qr.rows));
-						copyMakeBorder(qr_raw, qr, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
+					//if (src.size() == 4 && dst.size() == 4)			// Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
+					//{
+					//	warp_matrix = getPerspectiveTransform(src, dst);
+					//	warpPerspective(image, qr_raw, warp_matrix, Size(qr.cols, qr.rows));
+					//	copyMakeBorder(qr_raw, qr, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
 
-						cvtColor(qr, qr_gray, CV_RGB2GRAY);
-						threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
+					//	cvtColor(qr, qr_gray, CV_RGB2GRAY);
+					//	threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
 
-						//threshold(qr_gray, qr_thres, 0, 255, CV_THRESH_OTSU);
-						//for( int d=0 ; d < 4 ; d++){	src.pop_back(); dst.pop_back(); }
-					}
+					//	//threshold(qr_gray, qr_thres, 0, 255, CV_THRESH_OTSU);
+					//	//for( int d=0 ; d < 4 ; d++){	src.pop_back(); dst.pop_back(); }
+					//}
 
 					//Draw contours on the image
 					drawContours(image, contours, top, Scalar(255, 200, 0), 2, 8, hierarchy, 0);
