@@ -26,6 +26,7 @@ const int CV_QR_NORTH = 0;
 const int CV_QR_EAST = 1;
 const int CV_QR_SOUTH = 2;
 const int CV_QR_WEST = 3;
+int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W);
 float cv_returnX(Point2f X);
 float cv_returnY(Point2f Y);
 float cv_distance(Point2f P, Point2f Q);					// Get Distance between two points
@@ -41,6 +42,14 @@ float cross(Point2f v1,Point2f v2);
 //------------------------------------------------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
+		////////Test area
+
+
+	//float A = 2.777;
+	//int B = A;
+	//printf("\n B= %d", B);
+
+		/////////////////////
 
 		BYTE *colorData = nullptr;
 		int *framelength = nullptr;
@@ -129,6 +138,12 @@ int main(int argc, char **argv)
 		// From here, you can do all your QR processing on image
 
 		cvtColor(image, gray, CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale	
+
+
+		uchar pixel_value = gray.ptr<uchar>(10)[10];
+		printf(" point gray is: %d ", pixel_value);
+
+
 		Canny(gray, edges, 100, 200, 3);		// Apply Canny edge detection on the gray image
 
 
@@ -426,6 +441,9 @@ int main(int argc, char **argv)
 						// Draw point of the estimated 4th Corner of (entire) QR Code
 						circle(traces, N, 2, Scalar(255, 255, 255), -1, 8, 0);
 
+					//	int a = average_gray_scale(L[0], L[1], L[2], L[3]);
+
+
 						// Draw the lines used for estimating the 4th Corner of QR Code
 						line(traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
 						line(traces, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
@@ -461,6 +479,37 @@ int main(int argc, char **argv)
 
 // Function: Routine to get Distance between two points
 // Description: Given 2 points, the function returns the distance
+
+
+int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W) {
+	//太蠢了，所有数据装在二维数组里之后再批量处理。
+	//int minx, maxx, miny, maxy;
+	//float kNE, kES, kSW, kWN, bNE, bES, bSW, bWN;
+	//kNE = (E.y-N.y)/(E.x - N.x);
+	//bNE = E.y - (kNE*E.x);
+	//
+	//kES = (S.y - E.y) / (S.x - E.x);
+	//bES = S.y - (kES*S.x);
+
+	//kSW = (W.y - S.y) / (W.x - S.x);
+	//bSW = W.y - (kSW*W.x);
+
+	//kWN = (N.y - W.y) / (N.x - W.x);
+	//bWN = N.y - (kWN*N.x);
+	////printf(" kNE= %f, kES= %f, kSW= %f, kWN= %f, bNE= %f, bES= %f, bSW= %f, bWN = %f ", kNE, kES, kSW, kWN, bNE, bES, bSW, bWN);
+
+	//minx = N.x;
+	//maxx = N.x;
+	//miny = N.y;
+	//maxy = N.y;
+	//if (E.x < minx)
+	//	minx = E.x;
+	//if (S.x < minx)
+	//	minx = S.x;
+
+
+	return 0;
+}
 
 float cv_returnX(Point2f X) {
 	float number = X.x;
