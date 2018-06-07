@@ -11,6 +11,10 @@
 #include <cmath>
 #include "KinectManager.h"
 #include <omp.h>
+
+// define a bool to switch camera
+bool switch2Kinect = false;
+
 using namespace cv;
 using namespace std;
 
@@ -38,21 +42,42 @@ float cross(Point2f v1,Point2f v2);
 int main(int argc, char **argv)
 {
 
-	BYTE *colorData = nullptr;
-	int *framelength = nullptr;
+		BYTE *colorData = nullptr;
+		int *framelength = nullptr;
 
-	// Objects we need to interface with the Kinect
-	SensorManager kinectManager = boost::make_shared<ar_sandbox::KinectManager>();
-	ColorResizer colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
+		Mat image;
 
-	// initialize the variables we care about
-	colorResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
-	colorFrameBuffer = boost::make_shared<BYTE[]>(colorResizer->getSizeParameters().width * colorResizer->getSizeParameters().height * 4); // RGBA data	
+		// Objects we need to interface with the Kinect
+		SensorManager kinectManager = boost::make_shared<ar_sandbox::KinectManager>();
+		ColorResizer colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
 
-	// Starts kinect
-	kinectManager->initSensor();
+		// initialize the variables we care about
+		colorResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
+		colorFrameBuffer = boost::make_shared<BYTE[]>(colorResizer->getSizeParameters().width * colorResizer->getSizeParameters().height * 4); // RGBA data	
 
-	Mat image;
+		// This is for Webcamera define
+		VideoCapture capture(0);
+
+		if (switch2Kinect)
+		{
+			// Starts kinect
+			kinectManager->initSensor();
+		}
+		else
+		{
+			if(!capture.isOpened()) { cerr << " ERR: Unable find input Video source." << endl;
+				return -1;
+			}
+
+			//Step	: Capture a frame from Image Input for creating and initializing manipulation variables
+			//Info	: Inbuilt functions from OpenCV
+			//Note	: 
+			
+				capture >> image;
+			if(image.empty()){ cerr << "ERR: Unable to query image from capture device.\n" << endl;
+				return -1;
+			}			
+		}
 
 	// Creation of Intermediate 'Image' Objects required later
 	Mat gray(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
@@ -79,21 +104,28 @@ int main(int argc, char **argv)
 	   	qr = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
 		qr_gray = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC1);
 	   	qr_thres = Mat::zeros(100, 100, CV_8UC1);
-		
-		// Get the next frame from the Kinect
-		do
+
+		if (switch2Kinect)
 		{
-			kinectManager->readMultiFrame();
-		} while (kinectManager->getDepthDimensions().width <= 0);
+			// Get the next frame from the Kinect
+			do
+			{
+				kinectManager->readMultiFrame();
+			} while (kinectManager->getDepthDimensions().width <= 0);
 
 
-		// Process the color from the Kinect
-		cv::Mat colorFrame = kinectManager->getColorMat();
-		colorResizer->processFrame(colorFrame);
+			// Process the color from the Kinect
+			cv::Mat colorFrame = kinectManager->getColorMat();
+			colorResizer->processFrame(colorFrame);
 
-		cv::Mat image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
-		colorResizer->copyFrameBuffer(image);
-
+			image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
+			//cv::Mat image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
+			colorResizer->copyFrameBuffer(image);
+		}
+		else
+		{
+			capture >> image;						// Capture Image from Image Input
+		}
 		// From here, you can do all your QR processing on image
 
 		cvtColor(image, gray, CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale	
