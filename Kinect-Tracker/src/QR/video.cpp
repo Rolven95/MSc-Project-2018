@@ -3,8 +3,8 @@
 // Author  : Bharath Prabhuswamy
 //______________________________________________________________________________________
 #define idnumber 30
-#define RESIZE_WIDTH 512
-#define RESIZE_HEIGHT 512
+#define RESIZE_WIDTH 1280
+#define RESIZE_HEIGHT 720
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -13,7 +13,7 @@
 #include <omp.h>
 
 // define a bool to switch camera
-bool swich2Kinect = true;
+bool switch2Kinect = true;
 
 using namespace cv;
 using namespace std;
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 		qr_gray = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC1);
 	   	qr_thres = Mat::zeros(100, 100, CV_8UC1);
 
-		if (swich2Kinect)
+		if (switch2Kinect)
 		{
 			// Get the next frame from the Kinect
 			do
@@ -97,10 +97,10 @@ int main(int argc, char **argv)
 			cv::Mat colorFrame = kinectManager->getColorMat();
 			colorResizer->processFrame(colorFrame);
 
-			cv::Mat image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
+			image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
+			//cv::Mat image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
 			colorResizer->copyFrameBuffer(image);
 		}
-
 		// From here, you can do all your QR processing on image
 
 		cvtColor(image, gray, CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale	
