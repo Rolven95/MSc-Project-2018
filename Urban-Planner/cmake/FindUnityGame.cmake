@@ -1,11 +1,7 @@
 # Find functionality for the Unity Game Engine
 #
-# Note this may not work as suspected; the best
-# I can do for now is get the *runtime* version of Unity.
-# The assumption is that the runtime version is the same
-# as the editor version.
-# Unless you have a bespoke installation, this assumption
-# should be valid.
+# This currently only works for Unity.
+# Operates by simply querying the Windows Registry (regedit.exe)
 #
 # Variables:
 # 	- UnityGame_EXECUTABLE -> The main Unity executable
@@ -24,84 +20,37 @@
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
-if (NOT EXISTS "${CMAKE_SOURCE_DIR}/unity/Assets/Editor/GetUnityVersion.cs")
+# Search the windows registry for the installation of Unity
 
-	set (
-		UnityGame_FOUND
-		false
-		CACHE
-		BOOL
-		""
-	)
-
-endif ()
-
-# Read the variables from the cache
-
-if (APPLE) # We only support OSX or Windows, both 64 bit
-
-	set (
-		UnityGame_EXECUTABLE
-		/Applications/Unity/Unity.app/Contents/MacOS/Unity
-		CACHE
-		STRING
-		"Path to the unity editor executable"
-	)
-
-elseif (WIN32) # We only support OSX or Windows, both 64 bit
-
-	set (
-		UnityGame_EXECUTABLE
-		C:/Program Files/Unity/Editor/Unity.exe
-		CACHE
-		STRING
-		"Path to the unity editor executable"
-	)
-
-else () # Just echo a statement on any other system
-
-	message (
-		SEND_ERROR
-		"FindUnityGame.cmake : Only MacOS and Windows supported."
-	)
-
-	set (
-		UnityGame_FOUND
-		false
-		CACHE
-		BOOL
-		""
-	)
-
-	set (
-		UnityGame_VERSION_STRING
-	)
-
-endif ()
-
-# The arguments specifying the path are passed first as the GetUnityVersion.GetVersionInfo
-# inspects the first argument passed
+if (WIN32)
 
 if (NOT UnityGame_FOUND)
 
-	execute_process (
-		COMMAND
-			${UnityGame_EXECUTABLE}
-			"${CMAKE_BINARY_DIR}/unity_version.txt"
-			-quit
-			-batchmode
-			-projectPath ${CMAKE_SOURCE_DIR}/unity/
-			-executeMethod GetUnityVersion.GetVersionInfo 
-		RESULT_VARIABLE
-			_UNITY_GAME_COMMAND_SUCCESS
+	get_filename_component (
+		UnityGame_EXECUTABLE
+		"[HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Unity;DisplayIcon]"
+		ABSOLUTE
+		CACHE
 	)
 
-	if (${_UNITY_GAME_COMMAND_SUCCESS} EQUAL 1)
+	get_filename_component (
+		_UNITY_GAME_VERSION_NUM
+		"[HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Unity;DisplayVersion]"
+		NAME
+	)
 
-		message (
-			SEND_ERROR
-			"FindUnityGame.cmake : Couldn't run the Unity command. Please check installation for ${CMAKE_SOURCE_DIRECTORY}/unity/Assets/Editor/GetUnityVersion.cs"
+	# Do a match on Unity to make sure we found the right key
+	if (UnityGame_EXECUTABLE MATCHES "[Uu]nity")
+
+		set (
+			UnityGame_FOUND
+			true
+			CACHE
+			BOOL
+			""
 		)
+
+	else ()
 
 		set (
 			UnityGame_FOUND
@@ -111,36 +60,39 @@ if (NOT UnityGame_FOUND)
 			""
 		)
 
-		set (
-			_UNITY_GAME_COMMAND_SUCCESS
+	endif ()
+
+	# If we found Unity, go generate the version string
+	if (UnityGame_FOUND)
+
+		string(
+			REPLACE
+			"."
+			";"
+			VERSION_LIST
+			${_UNITY_GAME_VERSION_NUM}
 		)
-
-	else ()
-
-		file (
-			STRINGS
-			"${CMAKE_BINARY_DIR}/unity_version.txt"
-			_UNITY_GAME_VERSION_NUM
-		)
-
-		# All our tests have passed, so set the main cache variables
 
 		list (
 		  GET
-		  _UNITY_GAME_VERSION_NUM
+		  VERSION_LIST
 		  0
 		  UnityGame_VERSION_MAJOR
 		)
 
 		list (
 		  GET
-		  _UNITY_GAME_VERSION_NUM
+		  VERSION_LIST
 		  1
 		  UnityGame_VERSION_MINOR
 		)
 
-		set (
+		unset (
 			_UNITY_GAME_VERSION_NUM
+		)
+
+		unset (
+			VERSION_LIST
 		)
 
 		set (
@@ -161,6 +113,12 @@ if (NOT UnityGame_FOUND)
 					CACHE
 					BOOL
 					""
+					FORCE
+				)
+
+				message (
+					STATUS
+					"Requested Unity version ${UnityGame_FIND_VERSION} but found ${UnityGame_VERSION_STRING}"
 				)
 
 			else ()
@@ -171,6 +129,7 @@ if (NOT UnityGame_FOUND)
 					CACHE
 					BOOL
 					""
+					FORCE
 				)
 
 			endif ()
@@ -185,25 +144,39 @@ if (NOT UnityGame_FOUND)
 				CACHE
 				BOOL
 				""
+				FORCE
+			)
+
+			message (
+				STATUS
+				"Requested Unity version ${UnityGame_FIND_VERSION} but found ${UnityGame_VERSION_STRING}"
 			)
 
 		endif ()
 
 	endif ()
 
+	if (UnityGame_FOUND)
+
+	message (
+		STATUS
+		"Found unity : ${UnityGame_EXECUTABLE}"
+	)
+
+	message (
+		STATUS
+		"Unity version : ${UnityGame_VERSION_STRING}"
+	)	
+
+	endif ()
+
 endif ()
 
-message (
-	STATUS
-	"Found unity : ${UnityGame_FOUND}"
-)
+else ()
 
 message (
-	STATUS
-	"Found unity : ${UnityGame_EXECUTABLE}"
+	FATAL_ERROR
+	"Only Windows 64-Bit supported!"
 )
 
-message (
-	STATUS
-	"Unity version : ${UnityGame_VERSION_STRING}"
-)
+endif ()
