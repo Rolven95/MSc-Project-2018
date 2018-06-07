@@ -3,14 +3,18 @@
 // Author  : Bharath Prabhuswamy
 //______________________________________________________________________________________
 #define idnumber 30
-#define RESIZE_WIDTH 1280
-#define RESIZE_HEIGHT 720
+#define RESIZE_WIDTH 512
+#define RESIZE_HEIGHT 512
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cmath>
 #include "KinectManager.h"
 #include <omp.h>
+
+// define a bool to switch camera
+bool swich2Kinect = true;
+
 using namespace cv;
 using namespace std;
 
@@ -38,19 +42,19 @@ float cross(Point2f v1,Point2f v2);
 int main(int argc, char **argv)
 {
 
-	BYTE *colorData = nullptr;
-	int *framelength = nullptr;
+		BYTE *colorData = nullptr;
+		int *framelength = nullptr;
 
-	// Objects we need to interface with the Kinect
-	SensorManager kinectManager = boost::make_shared<ar_sandbox::KinectManager>();
-	ColorResizer colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
+		// Objects we need to interface with the Kinect
+		SensorManager kinectManager = boost::make_shared<ar_sandbox::KinectManager>();
+		ColorResizer colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
 
-	// initialize the variables we care about
-	colorResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
-	colorFrameBuffer = boost::make_shared<BYTE[]>(colorResizer->getSizeParameters().width * colorResizer->getSizeParameters().height * 4); // RGBA data	
+		// initialize the variables we care about
+		colorResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
+		colorFrameBuffer = boost::make_shared<BYTE[]>(colorResizer->getSizeParameters().width * colorResizer->getSizeParameters().height * 4); // RGBA data	
 
-	// Starts kinect
-	kinectManager->initSensor();
+																																			   // Starts kinect
+		kinectManager->initSensor();
 
 	Mat image;
 
@@ -79,20 +83,23 @@ int main(int argc, char **argv)
 	   	qr = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
 		qr_gray = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC1);
 	   	qr_thres = Mat::zeros(100, 100, CV_8UC1);
-		
-		// Get the next frame from the Kinect
-		do
+
+		if (swich2Kinect)
 		{
-			kinectManager->readMultiFrame();
-		} while (kinectManager->getDepthDimensions().width <= 0);
+			// Get the next frame from the Kinect
+			do
+			{
+				kinectManager->readMultiFrame();
+			} while (kinectManager->getDepthDimensions().width <= 0);
 
 
-		// Process the color from the Kinect
-		cv::Mat colorFrame = kinectManager->getColorMat();
-		colorResizer->processFrame(colorFrame);
+			// Process the color from the Kinect
+			cv::Mat colorFrame = kinectManager->getColorMat();
+			colorResizer->processFrame(colorFrame);
 
-		cv::Mat image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
-		colorResizer->copyFrameBuffer(image);
+			cv::Mat image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
+			colorResizer->copyFrameBuffer(image);
+		}
 
 		// From here, you can do all your QR processing on image
 
