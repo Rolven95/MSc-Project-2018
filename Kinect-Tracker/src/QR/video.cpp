@@ -13,7 +13,7 @@
 #include <omp.h>
 
 // define a bool to switch camera
-bool switch2Kinect = false;
+bool switch2Kinect = 0;
 
 using namespace cv;
 using namespace std;
@@ -26,7 +26,7 @@ const int CV_QR_NORTH = 0;
 const int CV_QR_EAST = 1;
 const int CV_QR_SOUTH = 2;
 const int CV_QR_WEST = 3;
-int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W);
+int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph);
 float cv_returnX(Point2f X);
 float cv_returnY(Point2f Y);
 float cv_distance(Point2f P, Point2f Q);					// Get Distance between two points
@@ -44,10 +44,15 @@ int main(int argc, char **argv)
 {
 		////////Test area
 
-
+	//int s = NULL;
+	//if (s == NULL)
+	//	printf("s is null");
+	//s = 1;
+	//if (s != NULL)
+	//	printf("s is not null");
 	//float A = 2.777;
 	//int B = A;
-	//printf("\n B= %d", B);
+	//printf("in main");
 
 		/////////////////////
 
@@ -104,10 +109,10 @@ int main(int argc, char **argv)
 	int DBG=1;						// Debug Flag
 	int framenumber = 0; //debug frame number
 	int key = 0;
-	while(key != 'q')				// While loop to query for Image Input frame
+	while(1)				// While loop to query for Image Input frame
 	{
 		framenumber++;
-		printf("\n Frame Number: %d  ", framenumber);
+		printf("\n %d  ", framenumber);
 		traces = Scalar(0,0,0);
 		qr_raw = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
 	   	qr = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
@@ -140,12 +145,10 @@ int main(int argc, char **argv)
 		cvtColor(image, gray, CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale	
 
 
-		uchar pixel_value = gray.ptr<uchar>(10)[10];
-		printf(" point gray is: %d ", pixel_value);
-
+		//uchar pixel_value = gray.ptr<uchar>(10)[10];
+		//printf(" point gray is: %d ", pixel_value);
 
 		Canny(gray, edges, 100, 200, 3);		// Apply Canny edge detection on the gray image
-
 
 		findContours(edges, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE); // Find contours with hierarchy
 
@@ -154,7 +157,7 @@ int main(int argc, char **argv)
 		// Get Moments for all Contours and the mass centers
 		vector<Moments> mu(contours.size());
 		vector<Point2f> mc(contours.size());
-#pragma omp parallel for  
+//#pragma omp parallel for  
 		for (int i = 0; i < contours.size(); i++)
 		{
 			mu[i] = moments(contours[i], false);
@@ -211,16 +214,15 @@ int main(int argc, char **argv)
 			}
 		}
 		if (mapcounter == 3) {
-			//printf("Find all map points");
-			printf(" 1. %f,%f 2. %f,%f 3. %f,%f", cv_returnX(mc[mappoint[0]]), cv_returnY(mc[mappoint[0]]), cv_returnX(mc[mappoint[1]]), cv_returnY(mc[mappoint[1]]), cv_returnX(mc[mappoint[2]]), cv_returnY(mc[mappoint[2]]));
-
+			printf("Find all map points");
+			//printf(" 1. %f,%f 2. %f,%f 3. %f,%f", cv_returnX(mc[mappoint[0]]), cv_returnY(mc[mappoint[0]]), cv_returnX(mc[mappoint[1]]), cv_returnY(mc[mappoint[1]]), cv_returnX(mc[mappoint[2]]), cv_returnY(mc[mappoint[2]]));
 
 		}
 
 		float alldistance[idnumber][idnumber]; //theorical maxium size
 		float smalldistance = 9999;
 
-#pragma omp parallel for  
+//#pragma omp parallel for  
 		for (int i = 0; i < mark; i++)  //actrual reading
 		{
 			for (int q = 0; q < mark; q++)
@@ -296,7 +298,7 @@ int main(int argc, char **argv)
 
 		if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
 		{
-#pragma omp parallel for  
+//#pragma omp parallel for  
 			for (int i = 0; i < qrcounter; i++) {
 
 				float dist, slope;
@@ -441,7 +443,8 @@ int main(int argc, char **argv)
 						// Draw point of the estimated 4th Corner of (entire) QR Code
 						circle(traces, N, 2, Scalar(255, 255, 255), -1, 8, 0);
 
-					//	int a = average_gray_scale(L[0], L[1], L[2], L[3]);
+						//printf("L0(%f,%f), L2(%f,%f)", L[0].x, L[0].y, L[2].x, L[2].y);
+						int a = average_gray_scale(L[0], L[1], L[2], L[3], gray);
 
 
 						// Draw the lines used for estimating the 4th Corner of QR Code
@@ -481,32 +484,116 @@ int main(int argc, char **argv)
 // Description: Given 2 points, the function returns the distance
 
 
-int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W) {
-	//太蠢了，所有数据装在二维数组里之后再批量处理。
-	//int minx, maxx, miny, maxy;
-	//float kNE, kES, kSW, kWN, bNE, bES, bSW, bWN;
-	//kNE = (E.y-N.y)/(E.x - N.x);
-	//bNE = E.y - (kNE*E.x);
-	//
-	//kES = (S.y - E.y) / (S.x - E.x);
-	//bES = S.y - (kES*S.x);
+int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
+			   
+	Mat useless = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC1);
+	useless = graph;
+	int edgepoints[2][2] = { N.x, N.x, N.y, N.y };//min, max, min, max
+	int points[4][2];
+	float lines[4][2];
 
-	//kSW = (W.y - S.y) / (W.x - S.x);
-	//bSW = W.y - (kSW*W.x);
+	points[0][0] = N.x;
+	points[0][1] = N.y;
 
-	//kWN = (N.y - W.y) / (N.x - W.x);
-	//bWN = N.y - (kWN*N.x);
-	////printf(" kNE= %f, kES= %f, kSW= %f, kWN= %f, bNE= %f, bES= %f, bSW= %f, bWN = %f ", kNE, kES, kSW, kWN, bNE, bES, bSW, bWN);
+	points[1][0] = E.x;
+	points[1][1] = E.y;
 
-	//minx = N.x;
-	//maxx = N.x;
-	//miny = N.y;
-	//maxy = N.y;
-	//if (E.x < minx)
-	//	minx = E.x;
-	//if (S.x < minx)
-	//	minx = S.x;
+	points[2][0] = S.x;
+	points[2][1] = S.y;
 
+	points[3][0] = W.x;
+	points[3][1] = W.y;
+
+	for (int i = 0; i < 4; i++) {
+	 //find minx 
+		if (points[i][0] < edgepoints[0][0])
+			edgepoints[0][0] = points[i][0];
+     //fin maxx
+		if (points[i][0] > edgepoints[0][1])
+			edgepoints[0][1] = points[i][0];
+	//find miny
+		if (points[i][1] < edgepoints[1][0])
+			edgepoints[1][0] = points[i][1];
+	//find maxy
+		if (points[i][1] > edgepoints[1][1])
+			edgepoints[1][1] = points[i][1];
+	}
+	//printf("   (%d,%d),(%d,%d),(%d,%d),(%d,%d)  ", points[0][0], points[0][1], points[1][0], points[1][1], points[2][0], points[2][1], points[3][0], points[3][1]);
+	//printf("\n xxxxxxxx: %d %d  yyyyyy: %d %d \n", edgepoints[0][0], edgepoints[0][1], edgepoints[1][0], edgepoints[1][1]);
+
+	lines[0][0] = (E.y-N.y)/(E.x - N.x);
+	lines[0][1] = E.y - (lines[0][0]*E.x);
+	
+	lines[1][0] = (S.y - E.y) / (S.x - E.x);
+	lines[1][1] = S.y - (lines[1][0]*S.x);
+
+	lines[2][0] = (W.y - S.y) / (W.x - S.x);
+	lines[2][1] = W.y - (lines[2][0]*W.x);
+
+	lines[3][0] = (N.y - W.y) / (N.x - W.x);
+	lines[3][1] = N.y - (lines[3][0]*N.x);
+
+	int up, down, left, right; 
+	int pk=NULL, nk=NULL; // just line number, not k or b
+	for (int i = 0; i < 4; i++) {
+		printf("number:%d",i);
+		//printf(" \n line %d: y=%fx+%f ", i, lines[i][0], lines[i][1]);
+
+		//positive k, nagetive k
+		if (lines[i][0] >= 0) { // k>=0
+			if (pk == NULL) {
+				//printf("  pk is null  ");
+				pk =i;
+				//printf(" pk = %f ", pk);
+			}
+			else { // already found an positive K, now compare b
+				if (lines[pk][1] >= lines[i][1]) {
+					up = pk;
+					down = i;
+				}
+				else {
+					up = i;
+					down = pk;
+				}
+			}
+		}
+		else if(lines[i][0]<0) {
+		 // k<0
+			if (nk == NULL) {
+				nk = i;
+				printf(" nk = %d ",nk);
+			}
+			else {
+				if (lines[nk][1] >= lines[i][1]) {
+					right = nk;
+					left = i;
+					printf("find all, right=%d, left=%d", right, left);
+				}
+				else {
+					right = i;
+					left = nk;
+					printf("find all, right=%d, left=%d", right, left);
+				}
+			}
+		}
+	}
+	printf(" up:%d, down:%d, left:%d,right:%d ",up,down,left,right);
+	//printf(" lines[0][0]= %f, lines[1][0]= %f, lines[2][0]= %f, lines[3][0]= %f, lines[0][1]= %f, lines[1][1]= %f, lines[2][1]= %f, lines[3][1] = %f ", lines[0][0], lines[1][0], lines[2][0], lines[3][0], lines[0][1], lines[1][1], lines[2][1], lines[3][1]);
+	int total_gray_scale = 0; 
+	int total_points = 0;
+	//for (int scanx = edgepoints[0][0]; scanx <= edgepoints[0][1]; scanx++) {
+	//	for (int scany = edgepoints[1][0]; scany <= edgepoints[1][1]; scany++) {
+	//		if ( scany>=(lines[left][0]*scanx+lines[left][1]) && scany >= (lines[down][0] * scanx + lines[down][1]) && scany <= (lines[right][0] * scanx + lines[right][1]) && scany <= (lines[up][0] * scanx + lines[up][1])) {
+	//			total_gray_scale= total_gray_scale + useless.ptr<uchar>(scanx)[scany];
+	//			total_points = total_points + 1; 
+	//		}
+	//		//printf("%d ", useless.ptr<uchar>(scanx)[scany]);
+	//	}
+	//	//printf("\n");
+	//}
+     // printf("\n total gray: %d", total_gray_scale);
+	//printf("For (10,10):%d", useless.ptr<uchar>(10)[10]);
+	
 
 	return 0;
 }
