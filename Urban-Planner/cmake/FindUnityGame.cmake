@@ -81,14 +81,17 @@ if (WIN32)
 			"The version of unity installed on the system"
 		)
 
-
 	endif ()
 
+	# This function is very powerful.
 	# One doesn't need to even check for validity
 	# on the UnityGame_EXECUTABLE as this function
 	# will handle the validity check
 	find_package_handle_standard_args (
 		UnityGame
+		REQUIRED_VARS
+			UnityGame_EXECUTABLE
+		VERSION_VAR
 			UnityGame_VERSION
 		FAIL_MESSAGE
 			"Could not find a suitable installation of Unity3D"
