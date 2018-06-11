@@ -44,15 +44,17 @@ int main(int argc, char **argv)
 {
 		////////Test area
 
-	//int s = NULL;
-	//if (s == NULL)
-	//	printf("s is null");
-	//s = 1;
-	//if (s != NULL)
-	//	printf("s is not null");
-	//float A = 2.777;
-	//int B = A;
-	//printf("in main");
+	/*int s = NULL;
+	if (s == NULL)
+		printf("s is null");
+	printf("xxxx: %d\n", s);
+	s = 1;
+	if (s != NULL)
+		printf("s is not null is 0");*/
+
+	/*float A = 2.777;
+	int B = A;
+	printf("in main");*/
 
 		/////////////////////
 
@@ -533,18 +535,15 @@ int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
 	lines[3][0] = (N.y - W.y) / (N.x - W.x);
 	lines[3][1] = N.y - (lines[3][0]*N.x);
 
-	int up, down, left, right; 
-	int pk=NULL, nk=NULL; // just line number, not k or b
-	for (int i = 0; i < 4; i++) {
-		printf("number:%d",i);
-		//printf(" \n line %d: y=%fx+%f ", i, lines[i][0], lines[i][1]);
 
+
+	int up, down, left, right; 
+	int pk=-1, nk=-1; // just line number, not k or b
+	for (int i = 0; i < 4; i++) {
 		//positive k, nagetive k
 		if (lines[i][0] >= 0) { // k>=0
-			if (pk == NULL) {
-				//printf("  pk is null  ");
-				pk =i;
-				//printf(" pk = %f ", pk);
+			if (pk == -1) {
+				pk = i;
 			}
 			else { // already found an positive K, now compare b
 				if (lines[pk][1] >= lines[i][1]) {
@@ -557,42 +556,44 @@ int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
 				}
 			}
 		}
-		else if(lines[i][0]<0) {
-		 // k<0
-			if (nk == NULL) {
+		else // k<0
+	   {
+			if (nk == -1) {
 				nk = i;
-				printf(" nk = %d ",nk);
 			}
 			else {
 				if (lines[nk][1] >= lines[i][1]) {
 					right = nk;
 					left = i;
-					printf("find all, right=%d, left=%d", right, left);
 				}
 				else {
 					right = i;
 					left = nk;
-					printf("find all, right=%d, left=%d", right, left);
 				}
 			}
 		}
 	}
-	printf(" up:%d, down:%d, left:%d,right:%d ",up,down,left,right);
-	//printf(" lines[0][0]= %f, lines[1][0]= %f, lines[2][0]= %f, lines[3][0]= %f, lines[0][1]= %f, lines[1][1]= %f, lines[2][1]= %f, lines[3][1] = %f ", lines[0][0], lines[1][0], lines[2][0], lines[3][0], lines[0][1], lines[1][1], lines[2][1], lines[3][1]);
+	//printf(" up:%d, down:%d, left:%d,right:%d ",up,down,left,right);
+	if (up == -1 || down == -1 || right == -1 || left == -1)
+		return -1;
+
 	int total_gray_scale = 0; 
 	int total_points = 0;
-	//for (int scanx = edgepoints[0][0]; scanx <= edgepoints[0][1]; scanx++) {
-	//	for (int scany = edgepoints[1][0]; scany <= edgepoints[1][1]; scany++) {
-	//		if ( scany>=(lines[left][0]*scanx+lines[left][1]) && scany >= (lines[down][0] * scanx + lines[down][1]) && scany <= (lines[right][0] * scanx + lines[right][1]) && scany <= (lines[up][0] * scanx + lines[up][1])) {
-	//			total_gray_scale= total_gray_scale + useless.ptr<uchar>(scanx)[scany];
+	int scanx, scany;
+	printf("scan x from %d to %d , y from %d to %d", edgepoints[0][0], edgepoints[0][1], edgepoints[1][0],edgepoints[1][1]);
+	
+	//for ( scanx = edgepoints[0][0]+1; scanx <= edgepoints[0][1]-1; scanx++) { // infinity problem
+	//	for ( scany = edgepoints[1][0]+1; scany <= edgepoints[1][1]-1; scany++) {
+	//		if ( scany>(lines[left][0]*scanx+lines[left][1]) && scany > (lines[down][0] * scanx + lines[down][1]) && scany < (lines[right][0] * scanx + lines[right][1]) && scany < (lines[up][0] * scanx + lines[up][1])) {
+	//			total_gray_scale = total_gray_scale + useless.ptr<uchar>(scanx)[scany];
 	//			total_points = total_points + 1; 
 	//		}
 	//		//printf("%d ", useless.ptr<uchar>(scanx)[scany]);
 	//	}
 	//	//printf("\n");
 	//}
-     // printf("\n total gray: %d", total_gray_scale);
-	//printf("For (10,10):%d", useless.ptr<uchar>(10)[10]);
+      printf("\n average gray: %d", total_gray_scale/total_points);
+	 // printf("For (10,10):%d", useless.ptr<uchar>(10)[10]);
 	
 
 	return 0;
