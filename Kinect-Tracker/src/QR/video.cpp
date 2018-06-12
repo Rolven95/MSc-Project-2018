@@ -5,6 +5,7 @@
 #define idnumber 30
 #define RESIZE_WIDTH 1280
 #define RESIZE_HEIGHT 720
+#define QRSIZE 128
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -73,6 +74,9 @@ int main(int argc, char **argv)
 
 		// This is for Webcamera define
 		VideoCapture capture(0);
+		capture.set(CV_CAP_PROP_FPS, 30);
+		capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+		capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
 		if (switch2Kinect)
 		{
@@ -99,8 +103,8 @@ int main(int argc, char **argv)
 	Mat gray(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
 	Mat edges(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
 
-	Mat traces(RESIZE_WIDTH, RESIZE_WIDTH,CV_8UC3);								// For Debug Visuals
-	Mat qr,qr_raw,qr_gray,qr_thres;
+	Mat traces(RESIZE_WIDTH, RESIZE_HEIGHT,CV_8UC3);								// For Debug Visuals
+	
 	    
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
@@ -116,10 +120,7 @@ int main(int argc, char **argv)
 		framenumber++;
 		printf("\n %d  ", framenumber);
 		traces = Scalar(0,0,0);
-		qr_raw = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
-	   	qr = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
-		qr_gray = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC1);
-	   	qr_thres = Mat::zeros(100, 100, CV_8UC1);
+		
 
 		if (switch2Kinect)
 		{
@@ -359,10 +360,7 @@ int main(int argc, char **argv)
 					vector<Point2f> L, M, O, tempL, tempM, tempO;
 					Point2f N;
 
-					vector<Point2f> src, dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
-													// dst - Destination Points to transform overlay image	
-
-					Mat warp_matrix;
+					
 
 					cv_getVertices(contours, top, slope, tempL);
 					cv_getVertices(contours, right, slope, tempM);
@@ -374,37 +372,8 @@ int main(int argc, char **argv)
 
 					int iflag = getIntersectionPoint(M[1], M[2], O[3], O[2], N);
 
-					threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
-					src.push_back(L[0]);
-					src.push_back(M[1]);
-					src.push_back(N);
-					src.push_back(O[3]);
-
-
-
-					//float test_grey = cvGetReal2D(gray, i, j);
-					//qr_gray = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC1);
-					//int number = gray
-					//printf(" kkkkk£º%d ",number);
-
-
-					/*dst.push_back(Point2f(0, 0));
-					dst.push_back(Point2f(qr.cols, 0));
-					dst.push_back(Point2f(qr.cols, qr.rows));
-					dst.push_back(Point2f(0, qr.rows));*/
-
-					//if (src.size() == 4 && dst.size() == 4)			// Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
-					//{
-					//	warp_matrix = getPerspectiveTransform(src, dst);
-					//	warpPerspective(image, qr_raw, warp_matrix, Size(qr.cols, qr.rows));
-					//	copyMakeBorder(qr_raw, qr, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
-
-					//	cvtColor(qr, qr_gray, CV_RGB2GRAY);
-					//	threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
-
-					//	//threshold(qr_gray, qr_thres, 0, 255, CV_THRESH_OTSU);
-					//	//for( int d=0 ; d < 4 ; d++){	src.pop_back(); dst.pop_back(); }
-					//}
+					//threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
+					
 
 					//Draw contours on the image
 					drawContours(image, contours, top, Scalar(255, 200, 0), 2, 8, hierarchy, 0);
@@ -432,6 +401,9 @@ int main(int argc, char **argv)
 						circle(traces, L[2], 2, Scalar(0, 0, 255), -1, 8, 0);
 						circle(traces, L[3], 2, Scalar(128, 128, 128), -1, 8, 0);
 
+						//printf(" L0 x is  %d , L0 y is %d ", L[0].x, L[0].y);
+
+
 						circle(traces, M[0], 2, Scalar(255, 255, 0), -1, 8, 0);
 						circle(traces, M[1], 2, Scalar(0, 255, 0), -1, 8, 0);
 						circle(traces, M[2], 2, Scalar(0, 0, 255), -1, 8, 0);
@@ -446,8 +418,13 @@ int main(int argc, char **argv)
 						circle(traces, N, 2, Scalar(255, 255, 255), -1, 8, 0);
 
 						//printf("L0(%f,%f), L2(%f,%f)", L[0].x, L[0].y, L[2].x, L[2].y);
-						int a = average_gray_scale(L[0], L[1], L[2], L[3], gray);
 
+						//gray.at<uchar>(10, 200) = 255;
+						//printf("height is  %d ,  weight is ", int(gray.at<uchar>(700,1200)));
+						//printf("row range is  %d ", gray.weight );
+
+						int a = average_gray_scale(L[0], L[1], L[2], L[3], image);
+					
 
 						// Draw the lines used for estimating the 4th Corner of QR Code
 						line(traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
@@ -463,7 +440,7 @@ int main(int argc, char **argv)
 
 		imshow("Image", image);
 		imshow("Traces", traces);
-		//imshow ( "QR code", qr_thres );
+		//
 
 		key = waitKey(1);	// OPENCV: wait for 1ms before accessing next frame
 
@@ -487,116 +464,50 @@ int main(int argc, char **argv)
 
 
 int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
-			   
-	Mat useless = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC1);
-	useless = graph;
-	int edgepoints[2][2] = { N.x, N.x, N.y, N.y };//min, max, min, max
-	int points[4][2];
-	float lines[4][2];
-
-	points[0][0] = N.x;
-	points[0][1] = N.y;
-
-	points[1][0] = E.x;
-	points[1][1] = E.y;
-
-	points[2][0] = S.x;
-	points[2][1] = S.y;
-
-	points[3][0] = W.x;
-	points[3][1] = W.y;
-
-	for (int i = 0; i < 4; i++) {
-	 //find minx 
-		if (points[i][0] < edgepoints[0][0])
-			edgepoints[0][0] = points[i][0];
-     //fin maxx
-		if (points[i][0] > edgepoints[0][1])
-			edgepoints[0][1] = points[i][0];
-	//find miny
-		if (points[i][1] < edgepoints[1][0])
-			edgepoints[1][0] = points[i][1];
-	//find maxy
-		if (points[i][1] > edgepoints[1][1])
-			edgepoints[1][1] = points[i][1];
-	}
-	//printf("   (%d,%d),(%d,%d),(%d,%d),(%d,%d)  ", points[0][0], points[0][1], points[1][0], points[1][1], points[2][0], points[2][1], points[3][0], points[3][1]);
-	//printf("\n xxxxxxxx: %d %d  yyyyyy: %d %d \n", edgepoints[0][0], edgepoints[0][1], edgepoints[1][0], edgepoints[1][1]);
-
-	lines[0][0] = (E.y-N.y)/(E.x - N.x);
-	lines[0][1] = E.y - (lines[0][0]*E.x);
 	
-	lines[1][0] = (S.y - E.y) / (S.x - E.x);
-	lines[1][1] = S.y - (lines[1][0]*S.x);
+	int total_gray_scale = 1;
+	Mat area, area_raw, area_gray, area_thres;
 
-	lines[2][0] = (W.y - S.y) / (W.x - S.x);
-	lines[2][1] = W.y - (lines[2][0]*W.x);
+	vector<Point2f> src, dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
+									// dst - Destination Points to transform overlay image
+	Mat warp_matrix;
+	area_raw = Mat::zeros(QRSIZE, QRSIZE, CV_8UC3);
+	area = Mat::zeros(QRSIZE, QRSIZE, CV_8UC3);
+	area_gray = Mat::zeros(QRSIZE, QRSIZE, CV_8UC1);
+	area_thres = Mat::zeros(QRSIZE, QRSIZE, CV_8UC1);
 
-	lines[3][0] = (N.y - W.y) / (N.x - W.x);
-	lines[3][1] = N.y - (lines[3][0]*N.x);
+	src.push_back(N);
+	src.push_back(E);
+	src.push_back(S);
+	src.push_back(W);
+
+	dst.push_back(Point2f(0, 0));
+	dst.push_back(Point2f(area.cols, 0));
+	dst.push_back(Point2f(area.cols, area.rows));
+	dst.push_back(Point2f(0, area.rows));
 
 
+	if (src.size() == 4 && dst.size() == 4)			// Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
+	{
+		//printf("got four");
+		warp_matrix = getPerspectiveTransform(src, dst);
+		warpPerspective(graph, area_raw, warp_matrix, Size(area.cols, area.rows));
+		copyMakeBorder(area_raw, area, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
 
-	int up, down, left, right; 
-	int pk=-1, nk=-1; // just line number, not k or b
-	for (int i = 0; i < 4; i++) {
-		//positive k, nagetive k
-		if (lines[i][0] >= 0) { // k>=0
-			if (pk == -1) {
-				pk = i;
-			}
-			else { // already found an positive K, now compare b
-				if (lines[pk][1] >= lines[i][1]) {
-					up = pk;
-					down = i;
-				}
-				else {
-					up = i;
-					down = pk;
-				}
-			}
+		cvtColor(area, area_gray, CV_RGB2GRAY);
+		//threshold(area_gray, area_thres, 127, 255, CV_THRESH_BINARY);
+	//	//threshold(area_gray, area_thres, 0, 255, CV_THRESH_OTSU);
+	//	//for( int d=0 ; d < 4 ; d++){	src.pop_back(); dst.pop_back(); }
+		//imshow("area code", area_gray);
+		for (int x = 0; x < QRSIZE; x++) {
+			for (int y = 0; y < QRSIZE;y++) {
+				total_gray_scale = total_gray_scale + int(area_gray.at<uchar>(y,x));
+			}		
 		}
-		else // k<0
-	   {
-			if (nk == -1) {
-				nk = i;
-			}
-			else {
-				if (lines[nk][1] >= lines[i][1]) {
-					right = nk;
-					left = i;
-				}
-				else {
-					right = i;
-					left = nk;
-				}
-			}
-		}
+		printf("avg gray = %d " , total_gray_scale/(QRSIZE*QRSIZE));
 	}
-	//printf(" up:%d, down:%d, left:%d,right:%d ",up,down,left,right);
-	if (up == -1 || down == -1 || right == -1 || left == -1)
-		return -1;
 
-	int total_gray_scale = 0; 
-	int total_points = 0;
-	int scanx, scany;
-	printf("scan x from %d to %d , y from %d to %d", edgepoints[0][0], edgepoints[0][1], edgepoints[1][0],edgepoints[1][1]);
-	
-	//for ( scanx = edgepoints[0][0]+1; scanx <= edgepoints[0][1]-1; scanx++) { // infinity problem
-	//	for ( scany = edgepoints[1][0]+1; scany <= edgepoints[1][1]-1; scany++) {
-	//		if ( scany>(lines[left][0]*scanx+lines[left][1]) && scany > (lines[down][0] * scanx + lines[down][1]) && scany < (lines[right][0] * scanx + lines[right][1]) && scany < (lines[up][0] * scanx + lines[up][1])) {
-	//			total_gray_scale = total_gray_scale + useless.ptr<uchar>(scanx)[scany];
-	//			total_points = total_points + 1; 
-	//		}
-	//		//printf("%d ", useless.ptr<uchar>(scanx)[scany]);
-	//	}
-	//	//printf("\n");
-	//}
-      printf("\n average gray: %d", total_gray_scale/total_points);
-	 // printf("For (10,10):%d", useless.ptr<uchar>(10)[10]);
-	
-
-	return 0;
+	return total_gray_scale / (QRSIZE*QRSIZE);
 }
 
 float cv_returnX(Point2f X) {
