@@ -151,4 +151,15 @@ namespace ar_sandbox
 		cv::Size getSizeParameters() { return cv::Size(width, height); }
 		void setResizeParameters(int w, int h);
 	};
+
+	class QRFrameProcessor : public DepthFrameProcessor<BYTE>
+	{
+	public:
+
+		QRFrameProcessor();
+		~QRFrameProcessor()
+		{}
+
+		void processFrame(cv::Mat &colorFrame);
+	};
 }

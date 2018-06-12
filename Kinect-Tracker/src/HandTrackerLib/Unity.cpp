@@ -10,6 +10,7 @@ using SensorManager = boost::shared_ptr<ar_sandbox::KinectManager>;
 using DepthResizer = boost::shared_ptr<ar_sandbox::DepthFrameResizer>;
 using ColorResizer = boost::shared_ptr<ar_sandbox::ColorFrameResizer>;
 using HandTracker = boost::shared_ptr<ar_sandbox::HandTracker>;
+using QRFrameProcessor = boost::shared_ptr<ar_sandbox::QRFrameProcessor>; // Alias for the shared pointer storage
 
 static int RES = 0;
 static bool isInited = false;
@@ -32,6 +33,7 @@ static boost::shared_ptr<BYTE[]> colorFrameBuffer;
 static boost::shared_ptr<unsigned short[]> depthFrameBuffer;
 static boost::shared_ptr<unsigned short[]> depthFrameBufferClone;
 static boost::shared_ptr<BYTE[]> contourFrameBuffer;
+static boost::shared_ptr<ar_sandbox::QRFrameProcessor> qrFrameProcessor;
 
 // Environment management
 void initEnv()
@@ -41,6 +43,9 @@ void initEnv()
 		sensorManager = boost::make_shared<ar_sandbox::KinectManager>();
 		depthResizer = boost::make_shared<ar_sandbox::DepthFrameResizer>();
 		colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
+
+		// Something like:
+		qrFrameProcessor = boost::make_shared<ar_sandbox::QRFrameProcessor>();
 
 		// Hand tracker needs special attention
 		depthResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
@@ -99,6 +104,7 @@ void updateProcessor()
 		cv::Mat colorFrame = sensorManager->getColorMat();
 		depthResizer->processFrame(depthFrame);
 		colorResizer->processFrame(colorFrame);
+		qrFrameProcessor->processFrame(colorFrame);
 	}
 }
 
