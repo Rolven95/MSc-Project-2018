@@ -245,7 +245,9 @@ namespace ar_sandbox
 	{
 		// From here, you can do all your QR processing on image
 
-		vector<vector<Point> > yourcontours;
+
+		vector<vector<Point> > mycontours;
+
 		vector<Vec4i> hierarchy;
 		vector<Point> pointsseq;    //used to save the approximated sides of each contour
 
