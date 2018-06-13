@@ -34,6 +34,7 @@ static boost::shared_ptr<unsigned short[]> depthFrameBuffer;
 static boost::shared_ptr<unsigned short[]> depthFrameBufferClone;
 static boost::shared_ptr<BYTE[]> contourFrameBuffer;
 static boost::shared_ptr<ar_sandbox::QRFrameProcessor> qrFrameProcessor;
+static boost::shared_ptr<ar_sandbox::QRFrameProcessor> Traces;
 
 // Environment management
 void initEnv()
@@ -75,6 +76,8 @@ void destroyEnv()
 		depthResizer.reset();
 		colorResizer.reset();
 		sensorManager.reset();
+		qrFrameProcessor.reset();
+
 
 		isInited = false;
 	}
@@ -177,4 +180,20 @@ bool getContourFrame(BYTE **interOpPtr, int *frameLen)
 
 	return false;
 }
+
+//bool getQRTraceFrame(BYTE **interOpPtr, int *frameLength)
+//{
+//	if (isInited)
+//	{
+//		cv::Mat TraceMat = cv::Mat(512, 512, CV_8UC4, Traces.get());
+//		colorResizer->copyFrameBuffer(TraceMat);
+//
+//		*interOpPtr = Traces.get();
+//		*frameLength = TraceMat.rows * TraceMat.cols;
+//
+//		return true;
+//	}
+//
+//	return false; // Return false if we aren't even inited
+//}
 
