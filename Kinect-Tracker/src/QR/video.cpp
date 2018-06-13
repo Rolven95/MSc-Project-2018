@@ -5,6 +5,7 @@
 #define idnumber 30
 #define RESIZE_WIDTH 1280
 #define RESIZE_HEIGHT 720
+#define QRSIZE 128
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -13,7 +14,7 @@
 #include <omp.h>
 
 // define a bool to switch camera
-bool switch2Kinect = false;
+bool switch2Kinect = 0;
 
 using namespace cv;
 using namespace std;
@@ -26,6 +27,7 @@ const int CV_QR_NORTH = 0;
 const int CV_QR_EAST = 1;
 const int CV_QR_SOUTH = 2;
 const int CV_QR_WEST = 3;
+int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph);
 float cv_returnX(Point2f X);
 float cv_returnY(Point2f Y);
 float cv_distance(Point2f P, Point2f Q);					// Get Distance between two points
@@ -41,6 +43,21 @@ float cross(Point2f v1,Point2f v2);
 //------------------------------------------------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
+		////////Test area
+
+	/*int s = NULL;
+	if (s == NULL)
+		printf("s is null");
+	printf("xxxx: %d\n", s);
+	s = 1;
+	if (s != NULL)
+		printf("s is not null is 0");*/
+
+	/*float A = 2.777;
+	int B = A;
+	printf("in main");*/
+
+		/////////////////////
 
 		BYTE *colorData = nullptr;
 		int *framelength = nullptr;
@@ -57,6 +74,9 @@ int main(int argc, char **argv)
 
 		// This is for Webcamera define
 		VideoCapture capture(0);
+		capture.set(CV_CAP_PROP_FPS, 30);
+		capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+		capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
 		if (switch2Kinect)
 		{
@@ -83,8 +103,8 @@ int main(int argc, char **argv)
 	Mat gray(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
 	Mat edges(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
 
-	Mat traces(RESIZE_WIDTH, RESIZE_WIDTH,CV_8UC3);								// For Debug Visuals
-	Mat qr,qr_raw,qr_gray,qr_thres;
+	Mat traces(RESIZE_WIDTH, RESIZE_HEIGHT,CV_8UC3);								// For Debug Visuals
+	
 	    
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
@@ -95,15 +115,12 @@ int main(int argc, char **argv)
 	int DBG=1;						// Debug Flag
 	int framenumber = 0; //debug frame number
 	int key = 0;
-	while(key != 'q')				// While loop to query for Image Input frame
+	while(1)				// While loop to query for Image Input frame
 	{
 		framenumber++;
-		printf("\n Frame Number: %d  ", framenumber);
+		printf("\n %d  ", framenumber);
 		traces = Scalar(0,0,0);
-		qr_raw = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
-	   	qr = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
-		qr_gray = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC1);
-	   	qr_thres = Mat::zeros(100, 100, CV_8UC1);
+		
 
 		if (switch2Kinect)
 		{
@@ -129,8 +146,12 @@ int main(int argc, char **argv)
 		// From here, you can do all your QR processing on image
 
 		cvtColor(image, gray, CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale	
-		Canny(gray, edges, 100, 200, 3);		// Apply Canny edge detection on the gray image
 
+
+		//uchar pixel_value = gray.ptr<uchar>(10)[10];
+		//printf(" point gray is: %d ", pixel_value);
+
+		Canny(gray, edges, 100, 200, 3);		// Apply Canny edge detection on the gray image
 
 		findContours(edges, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE); // Find contours with hierarchy
 
@@ -139,7 +160,7 @@ int main(int argc, char **argv)
 		// Get Moments for all Contours and the mass centers
 		vector<Moments> mu(contours.size());
 		vector<Point2f> mc(contours.size());
-#pragma omp parallel for  
+//#pragma omp parallel for  
 		for (int i = 0; i < contours.size(); i++)
 		{
 			mu[i] = moments(contours[i], false);
@@ -196,16 +217,15 @@ int main(int argc, char **argv)
 			}
 		}
 		if (mapcounter == 3) {
-			//printf("Find all map points");
-			printf(" 1. %f,%f 2. %f,%f 3. %f,%f", cv_returnX(mc[mappoint[0]]), cv_returnY(mc[mappoint[0]]), cv_returnX(mc[mappoint[1]]), cv_returnY(mc[mappoint[1]]), cv_returnX(mc[mappoint[2]]), cv_returnY(mc[mappoint[2]]));
-
+			printf("Find all map points");
+			//printf(" 1. %f,%f 2. %f,%f 3. %f,%f", cv_returnX(mc[mappoint[0]]), cv_returnY(mc[mappoint[0]]), cv_returnX(mc[mappoint[1]]), cv_returnY(mc[mappoint[1]]), cv_returnX(mc[mappoint[2]]), cv_returnY(mc[mappoint[2]]));
 
 		}
 
 		float alldistance[idnumber][idnumber]; //theorical maxium size
 		float smalldistance = 9999;
 
-#pragma omp parallel for  
+//#pragma omp parallel for  
 		for (int i = 0; i < mark; i++)  //actrual reading
 		{
 			for (int q = 0; q < mark; q++)
@@ -281,7 +301,7 @@ int main(int argc, char **argv)
 
 		if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
 		{
-#pragma omp parallel for  
+//#pragma omp parallel for  
 			for (int i = 0; i < qrcounter; i++) {
 
 				float dist, slope;
@@ -340,10 +360,7 @@ int main(int argc, char **argv)
 					vector<Point2f> L, M, O, tempL, tempM, tempO;
 					Point2f N;
 
-					vector<Point2f> src, dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
-													// dst - Destination Points to transform overlay image	
-
-					Mat warp_matrix;
+					
 
 					cv_getVertices(contours, top, slope, tempL);
 					cv_getVertices(contours, right, slope, tempM);
@@ -355,29 +372,8 @@ int main(int argc, char **argv)
 
 					int iflag = getIntersectionPoint(M[1], M[2], O[3], O[2], N);
 
-
-					src.push_back(L[0]);
-					src.push_back(M[1]);
-					src.push_back(N);
-					src.push_back(O[3]);
-
-					dst.push_back(Point2f(0, 0));
-					dst.push_back(Point2f(qr.cols, 0));
-					dst.push_back(Point2f(qr.cols, qr.rows));
-					dst.push_back(Point2f(0, qr.rows));
-
-					if (src.size() == 4 && dst.size() == 4)			// Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
-					{
-						warp_matrix = getPerspectiveTransform(src, dst);
-						warpPerspective(image, qr_raw, warp_matrix, Size(qr.cols, qr.rows));
-						copyMakeBorder(qr_raw, qr, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
-
-						cvtColor(qr, qr_gray, CV_RGB2GRAY);
-						threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
-
-						//threshold(qr_gray, qr_thres, 0, 255, CV_THRESH_OTSU);
-						//for( int d=0 ; d < 4 ; d++){	src.pop_back(); dst.pop_back(); }
-					}
+					//threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
+					
 
 					//Draw contours on the image
 					drawContours(image, contours, top, Scalar(255, 200, 0), 2, 8, hierarchy, 0);
@@ -405,6 +401,9 @@ int main(int argc, char **argv)
 						circle(traces, L[2], 2, Scalar(0, 0, 255), -1, 8, 0);
 						circle(traces, L[3], 2, Scalar(128, 128, 128), -1, 8, 0);
 
+						//printf(" L0 x is  %d , L0 y is %d ", L[0].x, L[0].y);
+
+
 						circle(traces, M[0], 2, Scalar(255, 255, 0), -1, 8, 0);
 						circle(traces, M[1], 2, Scalar(0, 255, 0), -1, 8, 0);
 						circle(traces, M[2], 2, Scalar(0, 0, 255), -1, 8, 0);
@@ -417,6 +416,15 @@ int main(int argc, char **argv)
 
 						// Draw point of the estimated 4th Corner of (entire) QR Code
 						circle(traces, N, 2, Scalar(255, 255, 255), -1, 8, 0);
+
+						//printf("L0(%f,%f), L2(%f,%f)", L[0].x, L[0].y, L[2].x, L[2].y);
+
+						//gray.at<uchar>(10, 200) = 255;
+						//printf("height is  %d ,  weight is ", int(gray.at<uchar>(700,1200)));
+						//printf("row range is  %d ", gray.weight );
+
+						int a = average_gray_scale(L[0], L[1], L[2], L[3], image);
+					
 
 						// Draw the lines used for estimating the 4th Corner of QR Code
 						line(traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
@@ -432,7 +440,7 @@ int main(int argc, char **argv)
 
 		imshow("Image", image);
 		imshow("Traces", traces);
-		//imshow ( "QR code", qr_thres );
+		//
 
 		key = waitKey(1);	// OPENCV: wait for 1ms before accessing next frame
 
@@ -453,6 +461,54 @@ int main(int argc, char **argv)
 
 // Function: Routine to get Distance between two points
 // Description: Given 2 points, the function returns the distance
+
+
+int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
+	
+	int total_gray_scale = 1;
+	Mat area, area_raw, area_gray, area_thres;
+
+	vector<Point2f> src, dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
+									// dst - Destination Points to transform overlay image
+	Mat warp_matrix;
+	area_raw = Mat::zeros(QRSIZE, QRSIZE, CV_8UC3);
+	area = Mat::zeros(QRSIZE, QRSIZE, CV_8UC3);
+	area_gray = Mat::zeros(QRSIZE, QRSIZE, CV_8UC1);
+	area_thres = Mat::zeros(QRSIZE, QRSIZE, CV_8UC1);
+
+	src.push_back(N);
+	src.push_back(E);
+	src.push_back(S);
+	src.push_back(W);
+
+	dst.push_back(Point2f(0, 0));
+	dst.push_back(Point2f(area.cols, 0));
+	dst.push_back(Point2f(area.cols, area.rows));
+	dst.push_back(Point2f(0, area.rows));
+
+
+	if (src.size() == 4 && dst.size() == 4)			// Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
+	{
+		//printf("got four");
+		warp_matrix = getPerspectiveTransform(src, dst);
+		warpPerspective(graph, area_raw, warp_matrix, Size(area.cols, area.rows));
+		copyMakeBorder(area_raw, area, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
+
+		cvtColor(area, area_gray, CV_RGB2GRAY);
+		//threshold(area_gray, area_thres, 127, 255, CV_THRESH_BINARY);
+	//	//threshold(area_gray, area_thres, 0, 255, CV_THRESH_OTSU);
+	//	//for( int d=0 ; d < 4 ; d++){	src.pop_back(); dst.pop_back(); }
+		//imshow("area code", area_gray);
+		for (int x = 0; x < QRSIZE; x++) {
+			for (int y = 0; y < QRSIZE;y++) {
+				total_gray_scale = total_gray_scale + int(area_gray.at<uchar>(y,x));
+			}		
+		}
+		printf("avg gray = %d " , total_gray_scale/(QRSIZE*QRSIZE));
+	}
+
+	return total_gray_scale / (QRSIZE*QRSIZE);
+}
 
 float cv_returnX(Point2f X) {
 	float number = X.x;
