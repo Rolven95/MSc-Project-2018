@@ -10,7 +10,7 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cmath>
-#include "KinectManager.h"
+//#include "KinectManager.h"
 #include <omp.h>
 
 // define a bool to switch camera
@@ -19,15 +19,19 @@ bool switch2Kinect = 0;
 using namespace cv;
 using namespace std;
 
-using SensorManager = boost::shared_ptr<ar_sandbox::KinectManager>;
-using ColorResizer = boost::shared_ptr<ar_sandbox::ColorFrameResizer>;
-static boost::shared_ptr<BYTE[]> colorFrameBuffer;
-
+//using SensorManager = boost::shared_ptr<ar_sandbox::KinectManager>;
+//using ColorResizer = boost::shared_ptr<ar_sandbox::ColorFrameResizer>;
+//static boost::shared_ptr<BYTE[]> colorFrameBuffer;
+//
 const int CV_QR_NORTH = 0;
 const int CV_QR_EAST = 1;
 const int CV_QR_SOUTH = 2;
 const int CV_QR_WEST = 3;
-int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph);
+Mat qr_warper(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph);
+
+
+int average_gray_scale(Mat graph);
+
 float cv_returnX(Point2f X);
 float cv_returnY(Point2f Y);
 float cv_distance(Point2f P, Point2f Q);					// Get Distance between two points
@@ -43,34 +47,20 @@ float cross(Point2f v1,Point2f v2);
 //------------------------------------------------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
-		////////Test area
+		
 
-	/*int s = NULL;
-	if (s == NULL)
-		printf("s is null");
-	printf("xxxx: %d\n", s);
-	s = 1;
-	if (s != NULL)
-		printf("s is not null is 0");*/
-
-	/*float A = 2.777;
-	int B = A;
-	printf("in main");*/
-
-		/////////////////////
-
-		BYTE *colorData = nullptr;
-		int *framelength = nullptr;
+		/*BYTE *colorData = nullptr;
+		int *framelength = nullptr;*/
 
 		Mat image;
 
 		// Objects we need to interface with the Kinect
-		SensorManager kinectManager = boost::make_shared<ar_sandbox::KinectManager>();
-		ColorResizer colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
+		//SensorManager kinectManager = boost::make_shared<ar_sandbox::KinectManager>();
+		//ColorResizer colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
 
-		// initialize the variables we care about
-		colorResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
-		colorFrameBuffer = boost::make_shared<BYTE[]>(colorResizer->getSizeParameters().width * colorResizer->getSizeParameters().height * 4); // RGBA data	
+		//// initialize the variables we care about
+		//colorResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
+		//colorFrameBuffer = boost::make_shared<BYTE[]>(colorResizer->getSizeParameters().width * colorResizer->getSizeParameters().height * 4); // RGBA data	
 
 		// This is for Webcamera define
 		VideoCapture capture(0);
@@ -81,7 +71,7 @@ int main(int argc, char **argv)
 		if (switch2Kinect)
 		{
 			// Starts kinect
-			kinectManager->initSensor();
+			//kinectManager->initSensor();
 		}
 		else
 		{
@@ -125,19 +115,19 @@ int main(int argc, char **argv)
 		if (switch2Kinect)
 		{
 			// Get the next frame from the Kinect
-			do
-			{
-				kinectManager->readMultiFrame();
-			} while (kinectManager->getDepthDimensions().width <= 0);
+			//do
+			//{
+			//	kinectManager->readMultiFrame();
+			//} while (kinectManager->getDepthDimensions().width <= 0);
 
 
-			// Process the color from the Kinect
-			cv::Mat colorFrame = kinectManager->getColorMat();
-			colorResizer->processFrame(colorFrame);
+			//// Process the color from the Kinect
+			//cv::Mat colorFrame = kinectManager->getColorMat();
+			//colorResizer->processFrame(colorFrame);
 
-			image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
-			//cv::Mat image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
-			colorResizer->copyFrameBuffer(image);
+			//image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
+			////cv::Mat image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
+			//colorResizer->copyFrameBuffer(image);
 		}
 		else
 		{
@@ -423,7 +413,12 @@ int main(int argc, char **argv)
 						//printf("height is  %d ,  weight is ", int(gray.at<uchar>(700,1200)));
 						//printf("row range is  %d ", gray.weight );
 
-						int a = average_gray_scale(L[0], L[1], L[2], L[3], image);
+						int a = 0; // this is a landmark 
+						//printf("col is %d ", gray.cols);
+						//printf("row is %d ", gray.rows);
+
+						Mat testmat = qr_warper(L[0],M[1],N,O[3],image);
+						printf(" avg gray of gray is %d ",average_gray_scale(gray));
 					
 
 						// Draw the lines used for estimating the 4th Corner of QR Code
@@ -447,8 +442,8 @@ int main(int argc, char **argv)
 	}	// End of 'while' loop
 
 	// Always clean up because we're _IN C++ land!
-	colorResizer.reset();
-	kinectManager.reset();
+	//colorResizer.reset();
+	//kinectManager.reset();
 
 	return 0;
 }
@@ -463,11 +458,9 @@ int main(int argc, char **argv)
 // Description: Given 2 points, the function returns the distance
 
 
-int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
-	
-	int total_gray_scale = 1;
-	Mat area, area_raw, area_gray, area_thres;
 
+Mat qr_warper (Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
+	Mat area, area_raw, area_gray, area_thres;
 	vector<Point2f> src, dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
 									// dst - Destination Points to transform overlay image
 	Mat warp_matrix;
@@ -495,19 +488,36 @@ int average_gray_scale(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
 		copyMakeBorder(area_raw, area, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
 
 		cvtColor(area, area_gray, CV_RGB2GRAY);
-		//threshold(area_gray, area_thres, 127, 255, CV_THRESH_BINARY);
-	//	//threshold(area_gray, area_thres, 0, 255, CV_THRESH_OTSU);
-	//	//for( int d=0 ; d < 4 ; d++){	src.pop_back(); dst.pop_back(); }
-		//imshow("area code", area_gray);
-		for (int x = 0; x < QRSIZE; x++) {
-			for (int y = 0; y < QRSIZE;y++) {
-				total_gray_scale = total_gray_scale + int(area_gray.at<uchar>(y,x));
-			}		
-		}
-		printf("avg gray = %d " , total_gray_scale/(QRSIZE*QRSIZE));
+		imshow("area code", area_gray);
 	}
+	return area_gray;
+}
 
-	return total_gray_scale / (QRSIZE*QRSIZE);
+
+int average_gray_scale(Mat input) {
+	int b = 0; 
+	int xmax, ymax;
+	int total_gray_scale = 0;
+	Mat graph;
+	//graph = Mat::zeros(input.size(), CV_8UC1);
+	graph = input;
+	
+	ymax = graph.rows - 1;
+	xmax = graph.cols - 1;
+	//printf("col is %d ", xmax);
+	//printf("row is %d ", ymax);
+	//printf("gray is %d ", int(graph.at<uchar>(0, 0)));
+
+		for (int x = 0; x < xmax; x++) {
+			for (int y = 0; y < ymax;y++) {
+				total_gray_scale = total_gray_scale + int(graph.at<uchar>(y,x));
+				//printf("(%d,%d)", y,x);
+				//printf(" %d ", int(graph.at<uchar>(y, x)));
+			}	
+		}
+		printf("avg gray = %d " , total_gray_scale/(graph.rows*graph.cols));
+	return total_gray_scale / (graph.rows*graph.cols);
+	//return 0;
 }
 
 float cv_returnX(Point2f X) {
