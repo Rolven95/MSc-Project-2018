@@ -10,7 +10,7 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cmath>
-//#include "KinectManager.h"
+#include "KinectManager.h"
 #include <omp.h>
 
 // define a bool to switch camera
@@ -49,8 +49,8 @@ int main(int argc, char **argv)
 {
 		
 
-		/*BYTE *colorData = nullptr;
-		int *framelength = nullptr;*/
+		//BYTE *colorData = nullptr;
+		//int *framelength = nullptr;
 
 		Mat image;
 
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 		//ColorResizer colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
 
 		//// initialize the variables we care about
-		//colorResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
+		//colorResizer->setResizeParameters(RESIZE_HEIGHT, RESIZE_WIDTH);
 		//colorFrameBuffer = boost::make_shared<BYTE[]>(colorResizer->getSizeParameters().width * colorResizer->getSizeParameters().height * 4); // RGBA data	
 
 		// This is for Webcamera define
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 	Mat gray(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
 	Mat edges(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
 
-	Mat traces(RESIZE_WIDTH, RESIZE_HEIGHT,CV_8UC3);								// For Debug Visuals
+	Mat traces(RESIZE_HEIGHT, RESIZE_WIDTH,CV_8UC3);								// For Debug Visuals
 	
 	    
 	vector<vector<Point> > contours;
@@ -125,8 +125,8 @@ int main(int argc, char **argv)
 			//cv::Mat colorFrame = kinectManager->getColorMat();
 			//colorResizer->processFrame(colorFrame);
 
-			//image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
-			////cv::Mat image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
+			//image = cv::Mat(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorFrameBuffer.get());
+			////cv::Mat image = cv::Mat(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorFrameBuffer.get());
 			//colorResizer->copyFrameBuffer(image);
 		}
 		else
