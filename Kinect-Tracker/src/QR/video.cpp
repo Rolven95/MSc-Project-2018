@@ -6,6 +6,7 @@
 #define RESIZE_WIDTH 1280
 #define RESIZE_HEIGHT 720
 #define QRSIZE 128
+#define blackorwhite 180
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -31,7 +32,7 @@ Mat qr_warper(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph);
 
 
 int average_gray_scale(Mat graph);
-
+void info_digger(int info[], Mat qr);
 float cv_returnX(Point2f X);
 float cv_returnY(Point2f Y);
 float cv_distance(Point2f P, Point2f Q);					// Get Distance between two points
@@ -414,13 +415,15 @@ int main(int argc, char **argv)
 						//printf("row range is  %d ", gray.weight );
 
 						int a = 0; // this is a landmark 
+						int codes[6];
 						//printf("col is %d ", gray.cols);
 						//printf("row is %d ", gray.rows);
 
 						Mat testmat = qr_warper(L[0],M[1],N,O[3],image);
-						printf(" avg gray of gray is %d ",average_gray_scale(gray));
-					
-
+						//printf(" avg gray of gray is %d ",average_gray_scale(gray));
+						info_digger(codes, testmat);
+						for (int i = 0; i < 6; i++)
+							printf("%d ",codes[i]);
 						// Draw the lines used for estimating the 4th Corner of QR Code
 						line(traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
 						line(traces, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
@@ -490,6 +493,7 @@ Mat qr_warper (Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
 		cvtColor(area, area_gray, CV_RGB2GRAY);
 		imshow("area code", area_gray);
 	}
+	threshold(area_gray, area_gray, 127, 255, CV_THRESH_BINARY);
 	return area_gray;
 }
 
@@ -519,6 +523,64 @@ int average_gray_scale(Mat input) {
 	return total_gray_scale / (graph.rows*graph.cols);
 	//return 0;
 }
+
+void info_digger(int info[], Mat qr) {
+		int col = qr.cols; 
+		int row = qr.rows;
+		int c_points[4] = { col/25*7, col / 25 * (7+2) ,col / 25 * (7+2+7) ,col / 25 * (7+2+7+2) };
+		int r_points[4] = { row / 25 * 7, row / 25 * (7 + 2) ,row / 25 * (7 + 2 + 7) ,row / 25 * (7 + 2 + 7 + 2) };
+		Mat temp_mat; 
+	
+		//this is area 0; 
+		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		temp_mat = temp_mat.rowRange(Range(0,r_points[0])); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			info[0] = 1;
+		else
+			info[0] = 0;
+	
+		//this is area 1; 
+		temp_mat = qr.colRange(Range(0, c_points[0])); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			info[1] = 1;
+		else
+			info[1] = 0;
+	
+		//this is area 2; 
+		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			info[2] = 1;
+		else
+			info[2] = 0;
+	
+		//this is area 3; 
+		temp_mat = qr.colRange(Range(c_points[3], col)); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			info[3] = 1;
+		else
+			info[3] = 0;
+	
+		//this is area 4; 
+		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[3], row)); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			info[4] = 1;
+		else
+			info[4] = 0;
+	
+		//this is area 5; 
+		temp_mat = qr.colRange(Range(c_points[3], col)); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[3], row)); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			info[5] = 1;
+		else
+			info[5] = 0;
+}
+
+
 
 float cv_returnX(Point2f X) {
 	float number = X.x;
