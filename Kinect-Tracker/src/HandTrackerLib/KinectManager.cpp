@@ -507,7 +507,7 @@ namespace ar_sandbox
 														//printf(" point gray is: %d ", pixel_value);
 
 		Canny(gray, edges, 100, 200, 3);		// Apply Canny edge detection on the gray image
-
+		blur(gray, gray, Size(1, 1));
 		findContours(edges, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE); // Find contours with hierarchy
 
 		mark = 0;								// Reset all detected marker count for this frame
