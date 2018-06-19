@@ -11,7 +11,8 @@ using namespace cv;
 using namespace std;
 
 #define idnumber 30
-
+#define RESIZE_WIDTH 1280
+#define RESIZE_HEIGHT 720
 
 namespace ar_sandbox
 {
@@ -106,11 +107,11 @@ namespace ar_sandbox
 								colorFrameWidth = width;
 
 							// Allocate enough memory for the RGB frame data and depth space coordinates
-							colorFrameData = boost::make_shared<BYTE[]>(height * width * 4);
+							colorFrameData = boost::make_shared<BYTE[]>(width * height * 4);
 						}
 					}
 
-					colorFrame->CopyConvertedFrameDataToArray(colorFrameHeight * colorFrameWidth * 4,
+					colorFrame->CopyConvertedFrameDataToArray(colorFrameWidth * colorFrameHeight * 4,
 						colorFrameData.get(),
 						ColorImageFormat_Bgra);
 				}
@@ -140,7 +141,7 @@ namespace ar_sandbox
 								depthFrameWidth = width;
 
 							// Allocate the depth array
-							depthFrameData = boost::make_shared<UINT16[]>(height * width);
+							depthFrameData = boost::make_shared<UINT16[]>(width * height);
 						}
 					}
 
@@ -182,10 +183,10 @@ namespace ar_sandbox
 	/////////////////////////////////////////////////
 
 	DepthFrameResizer::DepthFrameResizer()
-		: DepthFrameProcessor(512, 512)
+		: DepthFrameProcessor(RESIZE_HEIGHT, RESIZE_WIDTH)
 	{
 		processedBuffer = boost::make_shared<unsigned short[]>(width * height);
-		processedFrameMat = cv::Mat(width, height, CV_16U, processedBuffer.get());
+		processedFrameMat = cv::Mat(height, width, CV_16U, processedBuffer.get());
 	}
 
 	void DepthFrameResizer::setResizeParameters(int w, int h)
@@ -196,14 +197,14 @@ namespace ar_sandbox
 		// Clear and then reallocate the buffer
 		processedBuffer.reset();
 		processedBuffer = boost::make_shared<unsigned short[]>(width * height);
-		processedFrameMat = cv::Mat(width, height, CV_16U, processedBuffer.get());
+		processedFrameMat = cv::Mat(height, width, CV_16U, processedBuffer.get());
 	}
 
 	// This function copies the raw depth frame data then
 	// interpolates it up to size
 	void DepthFrameResizer::processFrame(cv::Mat & depthFrame)
 	{
-		cv::resize(depthFrame, processedFrameMat, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
+		cv::resize(depthFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
 	}
 
 	/////////////////////////////////////////////////
@@ -211,10 +212,10 @@ namespace ar_sandbox
 	/////////////////////////////////////////////////
 
 	ColorFrameResizer::ColorFrameResizer()
-		: DepthFrameProcessor(512, 512)
+		: DepthFrameProcessor(RESIZE_HEIGHT, RESIZE_WIDTH)
 	{
 		processedBuffer = boost::make_shared<BYTE[]>(width * height);
-		processedFrameMat = cv::Mat(width, height, CV_8UC4, processedBuffer.get());
+		processedFrameMat = cv::Mat(height, width, CV_8UC4, processedBuffer.get());
 	}
 
 	void ColorFrameResizer::setResizeParameters(int w, int h)
@@ -225,24 +226,24 @@ namespace ar_sandbox
 		// Clear and then reallocate the buffer
 		processedBuffer.reset();
 		processedBuffer = boost::make_shared<BYTE[]>(width * height * 4);
-		processedFrameMat = cv::Mat(width, height, CV_8UC4, processedBuffer.get());
+		processedFrameMat = cv::Mat(height, width, CV_8UC4, processedBuffer.get());
 	}
 
 	// This function copies the raw depth frame data then
 	// interpolates it up to size
 	void ColorFrameResizer::processFrame(cv::Mat & colorFrame)
 	{
-		cv::resize(colorFrame, processedFrameMat, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
+		cv::resize(colorFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
 	}
 
 
 	// TODO: Implement this
 
 	QRFrameProcessor::QRFrameProcessor()
-		: DepthFrameProcessor(512, 512)
+		: DepthFrameProcessor(RESIZE_HEIGHT, RESIZE_WIDTH)
 	{
 		processedBuffer = boost::make_shared<BYTE[]>(width * height);
-		processedFrameMat = cv::Mat(width, height, CV_8UC4, processedBuffer.get());
+		processedFrameMat = cv::Mat(height, width, CV_8UC4, processedBuffer.get());
 	}
 
 	// Function: Routine to get Distance between two points
@@ -506,7 +507,7 @@ namespace ar_sandbox
 														//printf(" point gray is: %d ", pixel_value);
 
 		Canny(gray, edges, 100, 200, 3);		// Apply Canny edge detection on the gray image
-
+		blur(gray, gray, Size(1, 1));
 		findContours(edges, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE); // Find contours with hierarchy
 
 		mark = 0;								// Reset all detected marker count for this frame

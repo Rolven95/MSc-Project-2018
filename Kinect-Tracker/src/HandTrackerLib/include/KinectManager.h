@@ -137,7 +137,7 @@ namespace ar_sandbox
 		// Inherited functions
 		void processFrame(cv::Mat &depthFrame);
 
-		cv::Size getSizeParameters() { return cv::Size(width, height); }
+		cv::Size getSizeParameters() { return cv::Size(height, width); }
 		void setResizeParameters(int w, int h);
 	};
 
@@ -151,7 +151,7 @@ namespace ar_sandbox
 
 		void processFrame(cv::Mat &colorFrame);
 
-		cv::Size getSizeParameters() { return cv::Size(width, height); }
+		cv::Size getSizeParameters() { return cv::Size(height, width); }
 		void setResizeParameters(int w, int h);
 	};
 

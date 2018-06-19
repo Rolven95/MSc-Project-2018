@@ -11,8 +11,8 @@
 #include <opencv2\highgui\highgui.hpp>
 #include <iostream>
 
-#define RESIZE_WIDTH 512
-#define RESIZE_HEIGHT 512
+#define RESIZE_WIDTH 1280
+#define RESIZE_HEIGHT 720
 
 int main(int argc, char **argv)
 {
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 		//imshow("Depth display", depthFrame);
 		//if (cv::waitKey(1) >= 0) break;
 
-		cv::Mat colorFrame(512, 512, CV_8UC4, colorsp);
+		cv::Mat colorFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorsp);
 		imshow("Color display", colorFrame);
 		if (cv::waitKey(1) >= 0) break;
 
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 	boost::shared_ptr<ar_sandbox::DepthFrameResizer> depthFrameProcessor(new ar_sandbox::DepthFrameResizer);
 
 	// Initiate the processor and then the hand tracker
-	depthFrameProcessor->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
+	depthFrameProcessor->setResizeParameters(RESIZE_HEIGHT, RESIZE_WIDTH);
 	cv::Size processParams = depthFrameProcessor->getSizeParameters();
 	boost::shared_ptr<ar_sandbox::HandTracker> handTracker(new ar_sandbox::HandTracker(processParams));
 
