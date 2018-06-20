@@ -32,7 +32,11 @@ Mat qr_warper(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph);
 
 
 int average_gray_scale(Mat graph);
-void info_digger(int info[], Mat qr);
+
+void position_finder(Point2f L, Point2f M, Point2f O, int info[]);
+
+int decoder(int code[]);
+void code_digger(int code[], Mat qr);
 float cv_returnX(Point2f X);
 float cv_returnY(Point2f Y);
 float cv_distance(Point2f P, Point2f Q);					// Get Distance between two points
@@ -52,9 +56,8 @@ int main(int argc, char **argv)
 
 		//BYTE *colorData = nullptr;
 		//int *framelength = nullptr;
-
+		int allinfo[idnumber][5];
 		Mat image;
-
 		// Objects we need to interface with the Kinect
 		//SensorManager kinectManager = boost::make_shared<ar_sandbox::KinectManager>();
 		//ColorResizer colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
@@ -351,8 +354,6 @@ int main(int argc, char **argv)
 					vector<Point2f> L, M, O, tempL, tempM, tempO;
 					Point2f N;
 
-					
-
 					cv_getVertices(contours, top, slope, tempL);
 					cv_getVertices(contours, right, slope, tempM);
 					cv_getVertices(contours, bottom, slope, tempO);
@@ -363,9 +364,11 @@ int main(int argc, char **argv)
 
 					int iflag = getIntersectionPoint(M[1], M[2], O[3], O[2], N);
 
+					if ( cv_distance(L[0],N) < cv_distance(L[0], M[0]) || cv_distance(L[0], N) > cv_distance(L[0], M[0])*2 	)
+						continue;
+
 					//threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
 					
-
 					//Draw contours on the image
 					drawContours(image, contours, top, Scalar(255, 200, 0), 2, 8, hierarchy, 0);
 					drawContours(image, contours, right, Scalar(0, 0, 255), 2, 8, hierarchy, 0);
@@ -416,14 +419,17 @@ int main(int argc, char **argv)
 
 						int a = 0; // this is a landmark 
 						int codes[6];
-						//printf("col is %d ", gray.cols);
-						//printf("row is %d ", gray.rows);
-
 						Mat testmat = qr_warper(L[0],M[1],N,O[3],image);
-						//printf(" avg gray of gray is %d ",average_gray_scale(gray));
-						info_digger(codes, testmat);
-						for (int i = 0; i < 6; i++)
-							printf("%d ",codes[i]);
+						position_finder(L[0], M[1], O[3], allinfo[0]);
+						code_digger(codes, testmat);
+
+						for (int i = 0; i < 5; i++)
+							printf("%d ", codes[i]);
+
+						allinfo[0][0] = decoder(codes);
+
+						for (int i = 0; i < 5; i++)
+							printf("%d ", allinfo[0][i]);
 						// Draw the lines used for estimating the 4th Corner of QR Code
 						line(traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
 						line(traces, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
@@ -524,7 +530,7 @@ int average_gray_scale(Mat input) {
 	//return 0;
 }
 
-void info_digger(int info[], Mat qr) {
+void code_digger(int code[], Mat qr) {
 		int col = qr.cols; 
 		int row = qr.rows;
 		int c_points[4] = { col/25*7, col / 25 * (7+2) ,col / 25 * (7+2+7) ,col / 25 * (7+2+7+2) };
@@ -535,52 +541,68 @@ void info_digger(int info[], Mat qr) {
 		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
 		temp_mat = temp_mat.rowRange(Range(0,r_points[0])); // y
 		if (average_gray_scale(temp_mat) < blackorwhite)
-			info[0] = 1;
+			code[0] = 1;
 		else
-			info[0] = 0;
+			code[0] = 0;
 	
 		//this is area 1; 
 		temp_mat = qr.colRange(Range(0, c_points[0])); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
 		if (average_gray_scale(temp_mat) < blackorwhite)
-			info[1] = 1;
+			code[1] = 1;
 		else
-			info[1] = 0;
+			code[1] = 0;
 	
 		//this is area 2; 
 		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
 		if (average_gray_scale(temp_mat) < blackorwhite)
-			info[2] = 1;
+			code[2] = 1;
 		else
-			info[2] = 0;
+			code[2] = 0;
 	
 		//this is area 3; 
 		temp_mat = qr.colRange(Range(c_points[3], col)); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
 		if (average_gray_scale(temp_mat) < blackorwhite)
-			info[3] = 1;
+			code[3] = 1;
 		else
-			info[3] = 0;
+			code[3] = 0;
 	
 		//this is area 4; 
 		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[3], row)); // y
 		if (average_gray_scale(temp_mat) < blackorwhite)
-			info[4] = 1;
+			code[4] = 1;
 		else
-			info[4] = 0;
+			code[4] = 0;
 	
 		//this is area 5; 
 		temp_mat = qr.colRange(Range(c_points[3], col)); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[3], row)); // y
 		if (average_gray_scale(temp_mat) < blackorwhite)
-			info[5] = 1;
+			code[5] = 1;
 		else
-			info[5] = 0;
+			code[5] = 0;
 }
-
-
+int decoder(int code[]) {
+	int output = 0;
+	output = output + code[0] * 32;
+	output = output + code[1] * 16;
+	output = output + code[2] * 8;
+	output = output + code[3] * 4;
+	output = output + code[4] * 2;
+	output = output + code[5] * 1;
+	return output;
+}
+void position_finder(Point2f L, Point2f M, Point2f O, int info[]) {
+	float degree = atan2(M.x-L.x, M.y-L.y) * 180 / 3.1415926;
+	info[4] = degree;
+	info[0] = -1;
+	info[1] = (M.x + L.x) / 2;
+	info[2] = (L.y + O.y) / 2;
+	info[3] = -1;
+}
 
 float cv_returnX(Point2f X) {
 	float number = X.x;
