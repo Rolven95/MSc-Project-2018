@@ -184,4 +184,16 @@ namespace ar_sandbox
 	protected:
 		cv::Mat Traces;
 	};
+
+	class ObjectInfo
+	{
+	public:
+
+	protected:
+		float X;
+		float Y;
+		float Depth;
+		float Rotation;
+		int ID;
+	};
 }

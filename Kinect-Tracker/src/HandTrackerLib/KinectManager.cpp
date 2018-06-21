@@ -522,6 +522,7 @@ namespace ar_sandbox
 			mc[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
 		}
 
+
 		int id[idnumber]; // one dimention identifiers list//count all identifiers, and store _IN id[];
 		int qrcode[idnumber / 3][3];
 		int mappoint[3];
@@ -552,246 +553,276 @@ namespace ar_sandbox
 					mark = mark + 1;
 				}
 			}
-			else if (pointsseq.size() == 3) {
-				int k = i;
-				int c = 0;
-				while (hierarchy[k][2] != -1)
-				{
-					k = hierarchy[k][2];
-					c = c + 1;
-				}
-				if (hierarchy[k][2] != -1)
-					c = c + 1;
-
-				if (c >= 5)
-				{
-					mappoint[mapcounter] = i;
-					mapcounter++;
-					//printf(" Find a map points ");
-				}
-			}
-		}
-		if (mapcounter == 3) {
-			printf("Find all map points");
-			//printf(" 1. %f,%f 2. %f,%f 3. %f,%f", cv_returnX(mc[mappoint[0]]), cv_returnY(mc[mappoint[0]]), cv_returnX(mc[mappoint[1]]), cv_returnY(mc[mappoint[1]]), cv_returnX(mc[mappoint[2]]), cv_returnY(mc[mappoint[2]]));
-
 		}
 
-		float alldistance[idnumber][idnumber]; //theorical maxium size
-		float smalldistance = 9999;
+			float alldistance[idnumber][idnumber]; //theorical maxium size
+			float smalldistance = 9999;
 
-		//#pragma omp parallel for  
-		for (int i = 0; i < mark; i++)  //actrual reading
-		{
-			for (int q = 0; q < mark; q++)
-			{
-				alldistance[i][q] = cv_distance(mc[id[i]], mc[id[q]]);
-				if (alldistance[i][q] > 0 && alldistance[i][q] < smalldistance)
-					smalldistance = alldistance[i][q];
-				//printf(" %d%d = %f ", i, q, alldistance[i][q]);
-			}
-		}
-		//printf(" small dis = %f ", smalldistance);
-
-		int qrcounter = 0; //how many qr codes, should be mark/3
-						   //#pragma omp parallel for  		
-		for (int i = 0; i < mark; i++) //check all points
-		{
-			//alldistance[i][i] = -1;
-			if (alldistance[i][0] != -1) {
-				int min1 = -1;
-				int min2 = -1;
-
-				for (int m = 0; m < mark; m++) { //give min1 and min2 initial value, non-zero value
-					if (min1 == -1 && m != i  && alldistance[m][0] != -1)
-						min1 = m;
-					else if (min2 == -1 && m != i  && alldistance[m][0] != -1)
-						min2 = m;
-				}
-				if (min1 == -1 || min2 == -1) {
-					//printf(" not enough ");
-					continue;
-				}
-
-				for (int q = i; q < mark; q++) {
-					if (alldistance[i][q] != -1 && alldistance[i][q] < alldistance[i][min1] && q != i && q != min2) {
-						min1 = q;
-					}
-					else if (alldistance[i][q] != -1 && alldistance[i][q] < alldistance[i][min2] && q != i && q != min1) {
-						min2 = q;
-					}
-				}
-
-				if (alldistance[i][min1] > smalldistance * 1.6 || alldistance[i][min2] > smalldistance * 1.6) {
-					//printf(" wrong ");
-					continue;
-				}
-
-				float AB, BC, CA;//i=a min1 =b min2 =c
-				AB = alldistance[i][min1];
-				BC = alldistance[min1][min2];
-				CA = alldistance[min2][i];
-				//printf(" dis: %f %f %f ", AB, BC, CA);
-
-				if (AB > BC && AB > CA)
-				{
-					qrcode[qrcounter][0] = id[min2]; qrcode[qrcounter][1] = id[i]; qrcode[qrcounter][2] = id[min1];
-				}
-				else if (CA > AB && CA > BC)
-				{
-					qrcode[qrcounter][0] = id[min1]; qrcode[qrcounter][1] = id[i]; qrcode[qrcounter][2] = id[min2];
-				}
-				else if (BC > AB && BC > CA)
-				{
-					qrcode[qrcounter][0] = id[i]; qrcode[qrcounter][1] = id[min1]; qrcode[qrcounter][2] = id[min2];
-				}
-
-				alldistance[i][0] = -1;
-				alldistance[min1][0] = -1;
-				alldistance[min2][0] = -1;
-
-				qrcounter++;
-			}
-		}
-		if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
-		{
 			//#pragma omp parallel for  
-			for (int i = 0; i < qrcounter; i++) {
-
-				float dist, slope;
-				int align, orientation;
-				int top, right, bottom, median1, median2, outlier;
-
-				outlier = qrcode[i][0];
-				median1 = qrcode[i][1];
-				median2 = qrcode[i][2];
-				top = qrcode[i][0];
-
-				dist = cv_lineEquation(mc[median1], mc[median2], mc[outlier]);	// Get the Perpendicular distance of the outlier from the longest side			
-				slope = cv_lineSlope(mc[median1], mc[median2], align);		// Also calculate the slope of the longest side
-
-																			// Now that we have the orientation of the line formed median1 & median2 and we also have the position of the outlier w.r.t. the line
-																			// Determine the 'right' and 'bottom' markers
-
-				if (align == 0)
+			for (int i = 0; i < mark; i++)  //actrual reading
+			{
+				for (int q = 0; q < mark; q++)
 				{
-					bottom = median1;
-					right = median2;
+					alldistance[i][q] = cv_distance(mc[id[i]], mc[id[q]]);
+					if (alldistance[i][q] > 0 && alldistance[i][q] < smalldistance)
+						smalldistance = alldistance[i][q];
+					//printf(" %d%d = %f ", i, q, alldistance[i][q]);
 				}
-				else if (slope < 0 && dist < 0)		// Orientation - North
-				{
-					bottom = median1;
-					right = median2;
-					orientation = CV_QR_NORTH;
+			}
+			//printf(" small dis = %f ", smalldistance);
+
+			int qrcounter = 0; //how many qr codes, should be mark/3
+							   //#pragma omp parallel for  		
+			for (int i = 0; i < mark; i++) //check all points
+			{
+				//alldistance[i][i] = -1;
+				if (alldistance[i][0] != -1) {
+					int min1 = -1;
+					int min2 = -1;
+
+					for (int m = 0; m < mark; m++) { //give min1 and min2 initial value, non-zero value
+						if (min1 == -1 && m != i  && alldistance[m][0] != -1)
+							min1 = m;
+						else if (min2 == -1 && m != i  && alldistance[m][0] != -1)
+							min2 = m;
+					}
+					if (min1 == -1 || min2 == -1) {
+						//printf(" not enough ");
+						continue;
+					}
+
+					for (int q = i; q < mark; q++) {
+						if (alldistance[i][q] != -1 && alldistance[i][q] < alldistance[i][min1] && q != i && q != min2) {
+							min1 = q;
+						}
+						else if (alldistance[i][q] != -1 && alldistance[i][q] < alldistance[i][min2] && q != i && q != min1) {
+							min2 = q;
+						}
+					}
+
+					if (alldistance[i][min1] > smalldistance * 1.6 || alldistance[i][min2] > smalldistance * 1.6) {
+						//printf(" wrong ");
+						continue;
+					}
+
+					float AB, BC, CA;//i=a min1 =b min2 =c
+					AB = alldistance[i][min1];
+					BC = alldistance[min1][min2];
+					CA = alldistance[min2][i];
+					//printf(" dis: %f %f %f ", AB, BC, CA);
+
+					if (AB > BC && AB > CA)
+					{
+						qrcode[qrcounter][0] = id[min2]; qrcode[qrcounter][1] = id[i]; qrcode[qrcounter][2] = id[min1];
+					}
+					else if (CA > AB && CA > BC)
+					{
+						qrcode[qrcounter][0] = id[min1]; qrcode[qrcounter][1] = id[i]; qrcode[qrcounter][2] = id[min2];
+					}
+					else if (BC > AB && BC > CA)
+					{
+						qrcode[qrcounter][0] = id[i]; qrcode[qrcounter][1] = id[min1]; qrcode[qrcounter][2] = id[min2];
+					}
+
+					alldistance[i][0] = -1;
+					alldistance[min1][0] = -1;
+					alldistance[min2][0] = -1;
+
+					qrcounter++;
 				}
-				else if (slope > 0 && dist < 0)		// Orientation - East
-				{
-					right = median1;
-					bottom = median2;
-					orientation = CV_QR_EAST;
-				}
-				else if (slope < 0 && dist > 0)		// Orientation - South			
-				{
-					right = median1;
-					bottom = median2;
-					orientation = CV_QR_SOUTH;
-				}
-
-				else if (slope > 0 && dist > 0)		// Orientation - West
-				{
-					bottom = median1;
-					right = median2;
-					orientation = CV_QR_WEST;
-				}
-
-
-				// To ensure any unintended values do not sneak up when QR code is not present
-				float area_top, area_right, area_bottom;
-
-				if (top < contours.size() && right < contours.size() && bottom < contours.size() && contourArea(contours[top]) > 10 && contourArea(contours[right]) > 10 && contourArea(contours[bottom]) > 10)
-				{
-
-					vector<Point2f> L, M, O, tempL, tempM, tempO;
-					Point2f N;
-
-
-
-					cv_getVertices(contours, top, slope, tempL);
-					cv_getVertices(contours, right, slope, tempM);
-					cv_getVertices(contours, bottom, slope, tempO);
-
-					cv_updateCornerOr(orientation, tempL, L); 			// Re-arrange marker corners w.r.t orientation of the QR code
-					cv_updateCornerOr(orientation, tempM, M); 			// Re-arrange marker corners w.r.t orientation of the QR code
-					cv_updateCornerOr(orientation, tempO, O); 			// Re-arrange marker corners w.r.t orientation of the QR code
-
-					int iflag = getIntersectionPoint(M[1], M[2], O[3], O[2], N);
-
-					//threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
-
-
-					//Draw contours on the image
-					drawContours(colorFrame, contours, top, Scalar(255, 200, 0), 2, 8, hierarchy, 0);
-					drawContours(colorFrame, contours, right, Scalar(0, 0, 255), 2, 8, hierarchy, 0);
-					drawContours(colorFrame, contours, bottom, Scalar(255, 0, 100), 2, 8, hierarchy, 0);
-
-					int DBG = 1;
-					// Insert Debug instructions here
-					//if (DBG == 1)
-					//{
-					//	// Debug Prints
-					//	// Visualizations for ease of understanding
-					//	if (slope > 5)
-					//		circle(Traces, Point(10, 20), 5, Scalar(0, 0, 255), -1, 8, 0);
-					//	else if (slope < -5)
-					//		circle(Traces, Point(10, 20), 5, Scalar(255, 255, 255), -1, 8, 0);
-
-					//	// Draw contours on Trace image for analysis	
-					//	drawContours(Traces, contours, top, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
-					//	drawContours(Traces, contours, right, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
-					//	drawContours(Traces, contours, bottom, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
-
-					//	// Draw points (4 corners) on Trace image for each Identification marker	
-					//	circle(Traces, L[0], 2, Scalar(255, 255, 0), -1, 8, 0);
-					//	circle(Traces, L[1], 2, Scalar(0, 255, 0), -1, 8, 0);
-					//	circle(Traces, L[2], 2, Scalar(0, 0, 255), -1, 8, 0);
-					//	circle(Traces, L[3], 2, Scalar(128, 128, 128), -1, 8, 0);
-
-					//	//printf(" L0 x is  %d , L0 y is %d ", L[0].x, L[0].y);
-
-
-					//	circle(Traces, M[0], 2, Scalar(255, 255, 0), -1, 8, 0);
-					//	circle(Traces, M[1], 2, Scalar(0, 255, 0), -1, 8, 0);
-					//	circle(Traces, M[2], 2, Scalar(0, 0, 255), -1, 8, 0);
-					//	circle(Traces, M[3], 2, Scalar(128, 128, 128), -1, 8, 0);
-
-					//	circle(Traces, O[0], 2, Scalar(255, 255, 0), -1, 8, 0);
-					//	circle(Traces, O[1], 2, Scalar(0, 255, 0), -1, 8, 0);
-					//	circle(Traces, O[2], 2, Scalar(0, 0, 255), -1, 8, 0);
-					//	circle(Traces, O[3], 2, Scalar(128, 128, 128), -1, 8, 0);
-
-					//	// Draw point of the estimated 4th Corner of (entire) QR Code
-					//	circle(Traces, N, 2, Scalar(255, 255, 255), -1, 8, 0);
-
-					//	//printf("L0(%f,%f), L2(%f,%f)", L[0].x, L[0].y, L[2].x, L[2].y);
-
-					//	//gray.at<uchar>(10, 200) = 255;
-					//	//printf("height is  %d ,  weight is ", int(gray.at<uchar>(700,1200)));
-					//	//printf("row range is  %d ", gray.weight );
-
-					//	//int a = average_gray_scale(L[0], L[1], L[2], L[3], image);
-
-
-					//	// Draw the lines used for estimating the 4th Corner of QR Code
-					//	line(Traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
-					//	line(Traces, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
-
-
-						// Debug Prints
-					//}
-				}
-
 			}
 
+
+
+			if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
+			{
+				//#pragma omp parallel for  
+				for (int i = 0; i < qrcounter; i++) {
+
+					//printf("");
+
+					float dist, slope;
+					int align, orientation;
+					int top, right, bottom, median1, median2, outlier;
+
+					outlier = qrcode[i][0];
+					median1 = qrcode[i][1];
+					median2 = qrcode[i][2];
+					top = qrcode[i][0];
+
+					dist = cv_lineEquation(mc[median1], mc[median2], mc[outlier]);	// Get the Perpendicular distance of the outlier from the longest side			
+					slope = cv_lineSlope(mc[median1], mc[median2], align);		// Also calculate the slope of the longest side
+
+																				// Now that we have the orientation of the line formed median1 & median2 and we also have the position of the outlier w.r.t. the line
+																				// Determine the 'right' and 'bottom' markers
+
+					if (align == 0)
+					{
+						bottom = median1;
+						right = median2;
+					}
+					else if (slope < 0 && dist < 0)		// Orientation - North
+					{
+						bottom = median1;
+						right = median2;
+						orientation = CV_QR_NORTH;
+					}
+					else if (slope > 0 && dist < 0)		// Orientation - East
+					{
+						right = median1;
+						bottom = median2;
+						orientation = CV_QR_EAST;
+					}
+					else if (slope < 0 && dist > 0)		// Orientation - South			
+					{
+						right = median1;
+						bottom = median2;
+						orientation = CV_QR_SOUTH;
+					}
+
+					else if (slope > 0 && dist > 0)		// Orientation - West
+					{
+						bottom = median1;
+						right = median2;
+						orientation = CV_QR_WEST;
+					}
+
+
+					// To ensure any unintended values do not sneak up when QR code is not present
+					float area_top, area_right, area_bottom;
+
+					if (top < contours.size() && right < contours.size() && bottom < contours.size() && contourArea(contours[top]) > 10 && contourArea(contours[right]) > 10 && contourArea(contours[bottom]) > 10)
+					{
+
+						vector<Point2f> L, M, O, tempL, tempM, tempO;
+						Point2f N;
+
+
+
+						cv_getVertices(contours, top, slope, tempL);
+						cv_getVertices(contours, right, slope, tempM);
+						cv_getVertices(contours, bottom, slope, tempO);
+
+						cv_updateCornerOr(orientation, tempL, L); 			// Re-arrange marker corners w.r.t orientation of the QR code
+						cv_updateCornerOr(orientation, tempM, M); 			// Re-arrange marker corners w.r.t orientation of the QR code
+						cv_updateCornerOr(orientation, tempO, O); 			// Re-arrange marker corners w.r.t orientation of the QR code
+
+						int iflag = getIntersectionPoint(M[1], M[2], O[3], O[2], N);
+
+						//threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
+
+
+						//Draw contours on the image
+						drawContours(colorFrame, contours, top, Scalar(255, 200, 0), 2, 8, hierarchy, 0);
+						drawContours(colorFrame, contours, right, Scalar(0, 0, 255), 2, 8, hierarchy, 0);
+						drawContours(colorFrame, contours, bottom, Scalar(255, 0, 100), 2, 8, hierarchy, 0);
+
+
+						int DBG = 2;
+						// Insert Debug instructions here
+						if (DBG == 1)
+						{
+							// Debug Prints
+							// Visualizations for ease of understanding
+							if (slope > 5)
+								circle(Traces, Point(10, 20), 5, Scalar(0, 0, 255), -1, 8, 0);
+							else if (slope < -5)
+								circle(Traces, Point(10, 20), 5, Scalar(255, 255, 255), -1, 8, 0);
+
+							// Draw contours on Trace image for analysis	
+							drawContours(Traces, contours, top, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+							drawContours(Traces, contours, right, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+							drawContours(Traces, contours, bottom, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+
+							// Draw points (4 corners) on Trace image for each Identification marker	
+							circle(Traces, L[0], 2, Scalar(255, 255, 0), -1, 8, 0);
+							circle(Traces, L[1], 2, Scalar(0, 255, 0), -1, 8, 0);
+							circle(Traces, L[2], 2, Scalar(0, 0, 255), -1, 8, 0);
+							circle(Traces, L[3], 2, Scalar(128, 128, 128), -1, 8, 0);
+
+							//printf(" L0 x is  %d , L0 y is %d ", L[0].x, L[0].y);
+
+
+							circle(Traces, M[0], 2, Scalar(255, 255, 0), -1, 8, 0);
+							circle(Traces, M[1], 2, Scalar(0, 255, 0), -1, 8, 0);
+							circle(Traces, M[2], 2, Scalar(0, 0, 255), -1, 8, 0);
+							circle(Traces, M[3], 2, Scalar(128, 128, 128), -1, 8, 0);
+
+							circle(Traces, O[0], 2, Scalar(255, 255, 0), -1, 8, 0);
+							circle(Traces, O[1], 2, Scalar(0, 255, 0), -1, 8, 0);
+							circle(Traces, O[2], 2, Scalar(0, 0, 255), -1, 8, 0);
+							circle(Traces, O[3], 2, Scalar(128, 128, 128), -1, 8, 0);
+
+							// Draw point of the estimated 4th Corner of (entire) QR Code
+							circle(Traces, N, 2, Scalar(255, 255, 255), -1, 8, 0);
+
+							//printf("L0(%f,%f), L2(%f,%f)", L[0].x, L[0].y, L[2].x, L[2].y);
+
+							//gray.at<uchar>(10, 200) = 255;
+							//printf("height is  %d ,  weight is ", int(gray.at<uchar>(700,1200)));
+							//printf("row range is  %d ", gray.weight );
+
+							//int a = average_gray_scale(L[0], L[1], L[2], L[3], image);
+
+
+							// Draw the lines used for estimating the 4th Corner of QR Code
+							line(Traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
+							line(Traces, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
+
+
+							// Debug Prints
+						}
+						else if (DBG == 2)
+						{
+							// Debug Prints
+							// Visualizations for ease of understanding
+							if (slope > 5)
+								circle(colorFrame, Point(10, 20), 5, Scalar(0, 0, 255), -1, 8, 0);
+							else if (slope < -5)
+								circle(colorFrame, Point(10, 20), 5, Scalar(255, 255, 255), -1, 8, 0);
+
+							// Draw contours on Trace image for analysis	
+							drawContours(colorFrame, contours, top, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+							drawContours(colorFrame, contours, right, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+							drawContours(colorFrame, contours, bottom, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+
+							// Draw points (4 corners) on Trace image for each Identification marker	
+							circle(colorFrame, L[0], 2, Scalar(255, 255, 0), -1, 8, 0);
+							circle(colorFrame, L[1], 2, Scalar(0, 255, 0), -1, 8, 0);
+							circle(colorFrame, L[2], 2, Scalar(0, 0, 255), -1, 8, 0);
+							circle(colorFrame, L[3], 2, Scalar(128, 128, 128), -1, 8, 0);
+
+							//printf(" L0 x is  %d , L0 y is %d ", L[0].x, L[0].y);
+
+
+							circle(colorFrame, M[0], 2, Scalar(255, 255, 0), -1, 8, 0);
+							circle(colorFrame, M[1], 2, Scalar(0, 255, 0), -1, 8, 0);
+							circle(colorFrame, M[2], 2, Scalar(0, 0, 255), -1, 8, 0);
+							circle(colorFrame, M[3], 2, Scalar(128, 128, 128), -1, 8, 0);
+
+							circle(colorFrame, O[0], 2, Scalar(255, 255, 0), -1, 8, 0);
+							circle(colorFrame, O[1], 2, Scalar(0, 255, 0), -1, 8, 0);
+							circle(colorFrame, O[2], 2, Scalar(0, 0, 255), -1, 8, 0);
+							circle(colorFrame, O[3], 2, Scalar(128, 128, 128), -1, 8, 0);
+
+							// Draw point of the estimated 4th Corner of (entire) QR Code
+							circle(colorFrame, N, 2, Scalar(255, 255, 255), -1, 8, 0);
+
+							//printf("L0(%f,%f), L2(%f,%f)", L[0].x, L[0].y, L[2].x, L[2].y);
+
+							//gray.at<uchar>(10, 200) = 255;
+							//printf("height is  %d ,  weight is ", int(gray.at<uchar>(700,1200)));
+							//printf("row range is  %d ", gray.weight );
+
+							//int a = average_gray_scale(L[0], L[1], L[2], L[3], image);
+
+
+							// Draw the lines used for estimating the 4th Corner of QR Code
+							line(colorFrame, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
+							line(colorFrame, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
+						}
+					}
+			}
 		}
 	}
 }
