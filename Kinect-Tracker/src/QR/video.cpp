@@ -7,7 +7,9 @@
 #define RESIZE_HEIGHT 720
 #define QRSIZE 128
 #define blackorwhite 180
-
+#define lifetime 5
+#define lifetimeextand 5
+#define updatelimit 10
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cmath>
@@ -33,7 +35,7 @@ Mat qr_warper(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph);
 
 int average_gray_scale(Mat graph);
 
-void position_finder(Point2f L, Point2f M, Point2f O, int info[]);
+void position_finder(Point2f L, Point2f M, Point2f O, int info[5]);
 
 int decoder(int code[]);
 void code_digger(int code[], Mat qr);
@@ -47,6 +49,9 @@ void cv_updateCorner(Point2f P, Point2f ref ,float& baseline,  Point2f& corner);
 void cv_updateCornerOr(int orientation, vector<Point2f> _IN, vector<Point2f> & _OUT);
 bool getIntersectionPoint(Point2f a1, Point2f a2, Point2f b1, Point2f b2, Point2f& intersection);
 float cross(Point2f v1,Point2f v2);
+void list_manager(int list[idnumber][6]);
+void list_insert(int input[5], int list[idnumber][6]);
+
 // void qrdetection(int ilist[50],int qrlist[15][3]);
 // Start of Main Loop
 //------------------------------------------------------------------------------------------------------------------------
@@ -56,7 +61,20 @@ int main(int argc, char **argv)
 
 		//BYTE *colorData = nullptr;
 		//int *framelength = nullptr;
-		int allinfo[idnumber][5];
+		int allinfo[idnumber][6];
+		for (int i = 0; i < idnumber; i++) {
+
+			allinfo[i][0] = 99;
+			allinfo[i][1] = -1;
+			allinfo[i][2] = -1;
+			allinfo[i][3] = -1;
+			allinfo[i][4] = -1;
+			allinfo[i][5] = 0;
+			
+
+		}
+			
+
 		Mat image;
 		// Objects we need to interface with the Kinect
 		//SensorManager kinectManager = boost::make_shared<ar_sandbox::KinectManager>();
@@ -114,7 +132,7 @@ int main(int argc, char **argv)
 		framenumber++;
 		printf("\n %d  ", framenumber);
 		traces = Scalar(0,0,0);
-		
+		list_manager(allinfo);
 
 		if (switch2Kinect)
 		{
@@ -419,21 +437,29 @@ int main(int argc, char **argv)
 
 						int a = 0; // this is a landmark 
 						int codes[6];
+						int info_of_this_qr[5];
+
 						Mat testmat = qr_warper(L[0],M[1],N,O[3],image);
-						position_finder(L[0], M[1], O[3], allinfo[0]);
+
+						position_finder(L[0], M[1], O[3], info_of_this_qr);
+
 						code_digger(codes, testmat);
 
-						for (int i = 0; i < 5; i++)
-							printf("%d ", codes[i]);
+					//	for (int i = 0; i < 5; i++)
+					//		printf("%d ", codes[i]);
 
-						allinfo[0][0] = decoder(codes);
+						info_of_this_qr[0] = decoder(codes);
 
-						for (int i = 0; i < 5; i++)
-							printf("%d ", allinfo[0][i]);
+					
+						//printf(" data in info_of_this: ");
+					//	for (int i = 0; i < 6; i++)
+					//		printf("%d ", info_of_this_qr[i]);
+
+						list_insert(info_of_this_qr, allinfo);
+
 						// Draw the lines used for estimating the 4th Corner of QR Code
 						line(traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
 						line(traces, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
-
 
 						// Debug Prints
 					}
@@ -441,7 +467,6 @@ int main(int argc, char **argv)
 				}
 			}
 		}
-
 		imshow("Image", image);
 		imshow("Traces", traces);
 		//
@@ -503,7 +528,6 @@ Mat qr_warper (Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
 	return area_gray;
 }
 
-
 int average_gray_scale(Mat input) {
 	int b = 0; 
 	int xmax, ymax;
@@ -525,7 +549,7 @@ int average_gray_scale(Mat input) {
 				//printf(" %d ", int(graph.at<uchar>(y, x)));
 			}	
 		}
-		printf("avg gray = %d " , total_gray_scale/(graph.rows*graph.cols));
+		//printf("avg gray = %d " , total_gray_scale/(graph.rows*graph.cols));
 	return total_gray_scale / (graph.rows*graph.cols);
 	//return 0;
 }
@@ -585,6 +609,7 @@ void code_digger(int code[], Mat qr) {
 		else
 			code[5] = 0;
 }
+
 int decoder(int code[]) {
 	int output = 0;
 	output = output + code[0] * 32;
@@ -595,13 +620,71 @@ int decoder(int code[]) {
 	output = output + code[5] * 1;
 	return output;
 }
-void position_finder(Point2f L, Point2f M, Point2f O, int info[]) {
+
+void position_finder(Point2f L, Point2f M, Point2f O, int info[5]) {
 	float degree = atan2(M.x-L.x, M.y-L.y) * 180 / 3.1415926;
 	info[4] = degree;
 	info[0] = -1;
 	info[1] = (M.x + L.x) / 2;
 	info[2] = (L.y + O.y) / 2;
 	info[3] = -1;
+}
+
+void list_manager(int list[idnumber][6]) {
+	printf(" start managing ");
+	for (int i = 0; i < idnumber; i++) {
+		if (list[i][0] != 99){
+			list[i][5]--;
+			printf(" No.%d -1,now is %d ",list[i][0],list[i][5]);
+			if (list[i][5] < 0) {
+				printf(" No.%d expired ", list[i][0]);
+				list[i][0] = 99;
+				list[i][1] = 0;
+				list[i][2] = 0;
+				list[i][3] = 0;
+				list[i][4] = 0;
+				list[i][5] = 0;
+			}
+		}
+	}
+}
+
+void list_insert(int input[5], int list[idnumber][6]) {
+	//printf(" start inserting ");
+	bool same = 0;
+	for (int i = 0; i < idnumber; i++) {
+		if (list[i][0] == input[0]) {
+			list[i][5] = lifetimeextand + list[i][5];
+			same = 1;
+			printf(" found same ");
+			printf("life time of No.%d at %d is %d ",list[i][0],i,list[i][5] );
+
+			if (list[i][5] > updatelimit) {
+				list[i][1] = input[1] * 0.2 + list[i][0] * 0.8;
+				list[i][2] = input[2] * 0.2 + list[i][0] * 0.8;
+				list[i][3] = input[3] * 0.2 + list[i][0] * 0.8;
+				list[i][4] = input[4] * 0.2 + list[i][0] * 0.8;
+				printf(" No.%d updated ", input[0]);
+			}
+		}
+	}
+
+	if(same==0){
+		//printf(" no same ");
+		for (int i = 0; i < idnumber; i++) {
+			if (list[i][0] == 99) {
+				//printf(" found umpty place ");
+				list[i][0] = input[0];
+				list[i][1] = input[1];
+				list[i][2] = input[2];
+				list[i][3] = input[3];
+				list[i][4] = input[4];
+				list[i][5] = lifetime;
+				printf("No. %d inserted at %d ", input[0], i);
+				return;
+			}
+		}
+	}
 }
 
 float cv_returnX(Point2f X) {
