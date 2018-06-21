@@ -49,6 +49,7 @@ int main(int argc, char **argv)
 		imshow("Color display", colorFrame);
 		if (cv::waitKey(1) >= 0) break;
 
+
 		/*cv::Mat contourFrame(512, 512, CV_8UC3, bp);
 		imshow("HandTracker display", contourFrame);
 		if (cv::waitKey(1) >= 0) break;*/
