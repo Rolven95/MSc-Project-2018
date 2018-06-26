@@ -37,7 +37,7 @@ void initEnv()
 		resizer = Resizer(new ar_sandbox::DepthFrameResizer);
 
 		// Initiate the processor and then the hand tracker
-		resizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
+		resizer->setResizeParameters(RESIZE_HEIGHT, RESIZE_WIDTH);
 		cv::Size processParams = resizer->getSizeParameters();
 		handTracker = HandTracker(new ar_sandbox::HandTracker(processParams));
 

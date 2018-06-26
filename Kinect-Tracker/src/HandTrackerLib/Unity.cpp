@@ -3,13 +3,14 @@
 
 #include <iostream>
 
-#define RESIZE_WIDTH 512
-#define RESIZE_HEIGHT 512
+#define RESIZE_WIDTH 1280
+#define RESIZE_HEIGHT 720
 
 using SensorManager = boost::shared_ptr<ar_sandbox::KinectManager>;
 using DepthResizer = boost::shared_ptr<ar_sandbox::DepthFrameResizer>;
 using ColorResizer = boost::shared_ptr<ar_sandbox::ColorFrameResizer>;
 using HandTracker = boost::shared_ptr<ar_sandbox::HandTracker>;
+using QRFrameProcessor = boost::shared_ptr<ar_sandbox::QRFrameProcessor>; // Alias for the shared pointer storage
 
 static int RES = 0;
 static bool isInited = false;
@@ -22,7 +23,7 @@ static HandTracker handTracker;
 //static bool isInited = false;
 //static boost::shared_ptr<ar_sandbox::KinectManager> sensorManager(new ar_sandbox::KinectManager);
 //static boost::shared_ptr<ar_sandbox::DepthFrameResizer> resizer(new ar_sandbox::DepthFrameResizer);
-//static boost::shared_ptr<ar_sandbox::HandTracker> handTracker(new ar_sandbox::HandTracker(cv::Size(RESIZE_WIDTH, RESIZE_HEIGHT)));
+//static boost::shared_ptr<ar_sandbox::HandTracker> handTracker(new ar_sandbox::HandTracker(cv::Size(RESIZE_HEIGHT, RESIZE_WIDTH)));
 
 // Hanck job.
 // Don't ever do this, but I'm also going to some
@@ -32,6 +33,7 @@ static boost::shared_ptr<BYTE[]> colorFrameBuffer;
 static boost::shared_ptr<unsigned short[]> depthFrameBuffer;
 static boost::shared_ptr<unsigned short[]> depthFrameBufferClone;
 static boost::shared_ptr<BYTE[]> contourFrameBuffer;
+static boost::shared_ptr<ar_sandbox::QRFrameProcessor> qrFrameProcessor;
 
 // Environment management
 void initEnv()
@@ -42,11 +44,14 @@ void initEnv()
 		depthResizer = boost::make_shared<ar_sandbox::DepthFrameResizer>();
 		colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
 
+		// Something like:
+		qrFrameProcessor = boost::make_shared<ar_sandbox::QRFrameProcessor>();
+
 		// Hand tracker needs special attention
-		depthResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
-		colorResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
+		depthResizer->setResizeParameters(RESIZE_HEIGHT, RESIZE_WIDTH);
+		colorResizer->setResizeParameters(RESIZE_HEIGHT, RESIZE_WIDTH);
 		cv::Size processParams = depthResizer->getSizeParameters(); // Both have the same params, so the depth one is representative of both
-		handTracker = boost::make_shared<ar_sandbox::HandTracker>(processParams);
+		//handTracker = boost::make_shared<ar_sandbox::HandTracker>(processParams);
 
 		// Create the static buffers
 		colorFrameBuffer = boost::make_shared<BYTE[]>(processParams.width * processParams.height * 4); // RGBA data
@@ -70,6 +75,8 @@ void destroyEnv()
 		depthResizer.reset();
 		colorResizer.reset();
 		sensorManager.reset();
+		qrFrameProcessor.reset();
+
 
 		isInited = false;
 	}
@@ -99,6 +106,7 @@ void updateProcessor()
 		cv::Mat colorFrame = sensorManager->getColorMat();
 		depthResizer->processFrame(depthFrame);
 		colorResizer->processFrame(colorFrame);
+		qrFrameProcessor->processFrame(colorFrame);
 	}
 }
 
@@ -108,7 +116,7 @@ void updateHandTracker()
 	{
 		// Ask the processor for its latest frame and pass it through the handtracker
 		// cv::Mat depthFrame = depthResizer->getFrame();
-		cv::Mat depthMatClone = cv::Mat(512, 512, CV_16U, depthFrameBufferClone.get());
+		cv::Mat depthMatClone = cv::Mat(RESIZE_HEIGHT, RESIZE_WIDTH, CV_16U, depthFrameBufferClone.get());
 		depthResizer->copyFrameBuffer(depthMatClone);
 		handTracker->processFrame(depthMatClone);
 	}
@@ -119,8 +127,8 @@ void setResizeProcessorParams(int width, int height)
 {
 	if (isInited)
 	{
-		depthResizer->setResizeParameters(width, height);
-		colorResizer->setResizeParameters(width, height);
+		depthResizer->setResizeParameters(height, width);
+		colorResizer->setResizeParameters(height, width);
 	}
 }
 
@@ -129,7 +137,7 @@ bool getDepthFrame(unsigned short **interOpPtr, int *frameLength)
 {
 	if (isInited)
 	{
-		cv::Mat depthMat = cv::Mat(512, 512, CV_16U, depthFrameBuffer.get());
+		cv::Mat depthMat = cv::Mat(RESIZE_HEIGHT, RESIZE_WIDTH, CV_16U, depthFrameBuffer.get());
 		depthResizer->copyFrameBuffer(depthMat);
 
 		*interOpPtr = depthFrameBuffer.get();
@@ -145,7 +153,7 @@ bool getColorFrame(BYTE **interOpPtr, int *frameLength)
 {
 	if (isInited)
 	{
-		cv::Mat colorMat = cv::Mat(512, 512, CV_8UC4, colorFrameBuffer.get());
+		cv::Mat colorMat = cv::Mat(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorFrameBuffer.get());
 		colorResizer->copyFrameBuffer(colorMat);
 
 		*interOpPtr = colorFrameBuffer.get();
@@ -161,7 +169,7 @@ bool getContourFrame(BYTE **interOpPtr, int *frameLen)
 {
 	if (isInited)
 	{
-		cv::Mat contourMat = cv::Mat(512, 512, CV_8UC3, contourFrameBuffer.get());
+		cv::Mat contourMat = cv::Mat(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC3, contourFrameBuffer.get());
 		handTracker->copyFrameBuffer(contourMat);
 
 		*interOpPtr = contourFrameBuffer.get();
@@ -171,4 +179,20 @@ bool getContourFrame(BYTE **interOpPtr, int *frameLen)
 
 	return false;
 }
+
+//bool getQRTraceFrame(BYTE **interOpPtr, int *frameLength)
+//{
+//	if (isInited)
+//	{
+//		cv::Mat TraceMat = cv::Mat(512, 512, CV_8UC4, Traces.get());
+//		colorResizer->copyFrameBuffer(TraceMat);
+//
+//		*interOpPtr = Traces.get();
+//		*frameLength = TraceMat.rows * TraceMat.cols;
+//
+//		return true;
+//	}
+//
+//	return false; // Return false if we aren't even inited
+//}
 

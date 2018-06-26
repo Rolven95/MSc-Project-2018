@@ -100,9 +100,7 @@ public class HandTracker : MonoBehaviour
                 {
                     for (int j = 0; j < 512; ++j, k += 3)
                     {
-                        currentContourFrame[j + (i * 512)] = new Color(IHandTracker.currentContourData[k + 2],
-                                              IHandTracker.currentContourData[k + 1],
-                                              IHandTracker.currentContourData[k]);
+                        currentContourFrame[j + (i * 512)] = new Color(IHandTracker.currentContourData[k + 2], IHandTracker.currentContourData[k + 1], IHandTracker.currentContourData[k]);
                     }
                 }
             }
@@ -158,8 +156,6 @@ public class HandTracker : MonoBehaviour
             Plane.GetComponent<Renderer>().material.mainTexture = cameraFrame;
             cameraFrame.SetPixels(IHandTracker.currentContourFrame);
             cameraFrame.Apply();
-
-			// Get the pixel data into a Texture2D
         }
     }
 }

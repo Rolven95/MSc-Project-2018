@@ -5,7 +5,11 @@
 #define idnumber 30
 #define RESIZE_WIDTH 1280
 #define RESIZE_HEIGHT 720
-
+#define QRSIZE 128
+#define blackorwhite 180
+#define lifetime 5
+#define lifetimeextand 5
+#define updatelimit 10
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cmath>
@@ -13,19 +17,28 @@
 #include <omp.h>
 
 // define a bool to switch camera
-bool switch2Kinect = false;
+bool switch2Kinect = 0;
 
 using namespace cv;
 using namespace std;
 
-using SensorManager = boost::shared_ptr<ar_sandbox::KinectManager>;
-using ColorResizer = boost::shared_ptr<ar_sandbox::ColorFrameResizer>;
-static boost::shared_ptr<BYTE[]> colorFrameBuffer;
-
+//using SensorManager = boost::shared_ptr<ar_sandbox::KinectManager>;
+//using ColorResizer = boost::shared_ptr<ar_sandbox::ColorFrameResizer>;
+//static boost::shared_ptr<BYTE[]> colorFrameBuffer;
+//
 const int CV_QR_NORTH = 0;
 const int CV_QR_EAST = 1;
 const int CV_QR_SOUTH = 2;
 const int CV_QR_WEST = 3;
+Mat qr_warper(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph);
+
+
+int average_gray_scale(Mat graph);
+
+void position_finder(Point2f L, Point2f M, Point2f O, int info[5]);
+
+int decoder(int code[]);
+void code_digger(int code[], Mat qr);
 float cv_returnX(Point2f X);
 float cv_returnY(Point2f Y);
 float cv_distance(Point2f P, Point2f Q);					// Get Distance between two points
@@ -36,32 +49,51 @@ void cv_updateCorner(Point2f P, Point2f ref ,float& baseline,  Point2f& corner);
 void cv_updateCornerOr(int orientation, vector<Point2f> _IN, vector<Point2f> & _OUT);
 bool getIntersectionPoint(Point2f a1, Point2f a2, Point2f b1, Point2f b2, Point2f& intersection);
 float cross(Point2f v1,Point2f v2);
+void list_manager(int list[idnumber][6]);
+void list_insert(int input[5], int list[idnumber][6]);
+
 // void qrdetection(int ilist[50],int qrlist[15][3]);
 // Start of Main Loop
 //------------------------------------------------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
+		
 
-		BYTE *colorData = nullptr;
-		int *framelength = nullptr;
+		//BYTE *colorData = nullptr;
+		//int *framelength = nullptr;
+		int allinfo[idnumber][6];
+		for (int i = 0; i < idnumber; i++) {
+
+			allinfo[i][0] = 99;
+			allinfo[i][1] = -1;
+			allinfo[i][2] = -1;
+			allinfo[i][3] = -1;
+			allinfo[i][4] = -1;
+			allinfo[i][5] = 0;
+			
+
+		}
+			
 
 		Mat image;
-
 		// Objects we need to interface with the Kinect
-		SensorManager kinectManager = boost::make_shared<ar_sandbox::KinectManager>();
-		ColorResizer colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
+		//SensorManager kinectManager = boost::make_shared<ar_sandbox::KinectManager>();
+		//ColorResizer colorResizer = boost::make_shared<ar_sandbox::ColorFrameResizer>();
 
-		// initialize the variables we care about
-		colorResizer->setResizeParameters(RESIZE_WIDTH, RESIZE_HEIGHT);
-		colorFrameBuffer = boost::make_shared<BYTE[]>(colorResizer->getSizeParameters().width * colorResizer->getSizeParameters().height * 4); // RGBA data	
+		//// initialize the variables we care about
+		//colorResizer->setResizeParameters(RESIZE_HEIGHT, RESIZE_WIDTH);
+		//colorFrameBuffer = boost::make_shared<BYTE[]>(colorResizer->getSizeParameters().width * colorResizer->getSizeParameters().height * 4); // RGBA data	
 
 		// This is for Webcamera define
 		VideoCapture capture(0);
+		capture.set(CV_CAP_PROP_FPS, 30);
+		capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+		capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
 		if (switch2Kinect)
 		{
 			// Starts kinect
-			kinectManager->initSensor();
+			//kinectManager->initSensor();
 		}
 		else
 		{
@@ -83,8 +115,8 @@ int main(int argc, char **argv)
 	Mat gray(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
 	Mat edges(image.size(), CV_MAKETYPE(image.depth(), 1));			// To hold Grayscale Image
 
-	Mat traces(RESIZE_WIDTH, RESIZE_WIDTH,CV_8UC3);								// For Debug Visuals
-	Mat qr,qr_raw,qr_gray,qr_thres;
+	Mat traces(RESIZE_HEIGHT, RESIZE_WIDTH,CV_8UC3);								// For Debug Visuals
+	
 	    
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
@@ -95,32 +127,29 @@ int main(int argc, char **argv)
 	int DBG=1;						// Debug Flag
 	int framenumber = 0; //debug frame number
 	int key = 0;
-	while(key != 'q')				// While loop to query for Image Input frame
+	while(1)				// While loop to query for Image Input frame
 	{
 		framenumber++;
-		printf("\n Frame Number: %d  ", framenumber);
+		printf("\n %d  ", framenumber);
 		traces = Scalar(0,0,0);
-		qr_raw = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
-	   	qr = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC3 );
-		qr_gray = Mat::zeros(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC1);
-	   	qr_thres = Mat::zeros(100, 100, CV_8UC1);
+		list_manager(allinfo);
 
 		if (switch2Kinect)
 		{
 			// Get the next frame from the Kinect
-			do
-			{
-				kinectManager->readMultiFrame();
-			} while (kinectManager->getDepthDimensions().width <= 0);
+			//do
+			//{
+			//	kinectManager->readMultiFrame();
+			//} while (kinectManager->getDepthDimensions().width <= 0);
 
 
-			// Process the color from the Kinect
-			cv::Mat colorFrame = kinectManager->getColorMat();
-			colorResizer->processFrame(colorFrame);
+			//// Process the color from the Kinect
+			//cv::Mat colorFrame = kinectManager->getColorMat();
+			//colorResizer->processFrame(colorFrame);
 
-			image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
-			//cv::Mat image = cv::Mat(RESIZE_WIDTH, RESIZE_HEIGHT, CV_8UC4, colorFrameBuffer.get());
-			colorResizer->copyFrameBuffer(image);
+			//image = cv::Mat(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorFrameBuffer.get());
+			////cv::Mat image = cv::Mat(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorFrameBuffer.get());
+			//colorResizer->copyFrameBuffer(image);
 		}
 		else
 		{
@@ -129,8 +158,12 @@ int main(int argc, char **argv)
 		// From here, you can do all your QR processing on image
 
 		cvtColor(image, gray, CV_RGB2GRAY);		// Convert Image captured from Image Input to GrayScale	
-		Canny(gray, edges, 100, 200, 3);		// Apply Canny edge detection on the gray image
 
+
+		//uchar pixel_value = gray.ptr<uchar>(10)[10];
+		//printf(" point gray is: %d ", pixel_value);
+
+		Canny(gray, edges, 100, 200, 3);		// Apply Canny edge detection on the gray image
 
 		findContours(edges, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE); // Find contours with hierarchy
 
@@ -139,7 +172,7 @@ int main(int argc, char **argv)
 		// Get Moments for all Contours and the mass centers
 		vector<Moments> mu(contours.size());
 		vector<Point2f> mc(contours.size());
-#pragma omp parallel for  
+//#pragma omp parallel for  
 		for (int i = 0; i < contours.size(); i++)
 		{
 			mu[i] = moments(contours[i], false);
@@ -196,16 +229,15 @@ int main(int argc, char **argv)
 			}
 		}
 		if (mapcounter == 3) {
-			//printf("Find all map points");
-			printf(" 1. %f,%f 2. %f,%f 3. %f,%f", cv_returnX(mc[mappoint[0]]), cv_returnY(mc[mappoint[0]]), cv_returnX(mc[mappoint[1]]), cv_returnY(mc[mappoint[1]]), cv_returnX(mc[mappoint[2]]), cv_returnY(mc[mappoint[2]]));
-
+			printf("Find all map points");
+			//printf(" 1. %f,%f 2. %f,%f 3. %f,%f", cv_returnX(mc[mappoint[0]]), cv_returnY(mc[mappoint[0]]), cv_returnX(mc[mappoint[1]]), cv_returnY(mc[mappoint[1]]), cv_returnX(mc[mappoint[2]]), cv_returnY(mc[mappoint[2]]));
 
 		}
 
 		float alldistance[idnumber][idnumber]; //theorical maxium size
 		float smalldistance = 9999;
 
-#pragma omp parallel for  
+//#pragma omp parallel for  
 		for (int i = 0; i < mark; i++)  //actrual reading
 		{
 			for (int q = 0; q < mark; q++)
@@ -281,7 +313,7 @@ int main(int argc, char **argv)
 
 		if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
 		{
-#pragma omp parallel for  
+//#pragma omp parallel for  
 			for (int i = 0; i < qrcounter; i++) {
 
 				float dist, slope;
@@ -340,11 +372,6 @@ int main(int argc, char **argv)
 					vector<Point2f> L, M, O, tempL, tempM, tempO;
 					Point2f N;
 
-					vector<Point2f> src, dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
-													// dst - Destination Points to transform overlay image	
-
-					Mat warp_matrix;
-
 					cv_getVertices(contours, top, slope, tempL);
 					cv_getVertices(contours, right, slope, tempM);
 					cv_getVertices(contours, bottom, slope, tempO);
@@ -355,30 +382,11 @@ int main(int argc, char **argv)
 
 					int iflag = getIntersectionPoint(M[1], M[2], O[3], O[2], N);
 
+					if ( cv_distance(L[0],N) < cv_distance(L[0], M[0]) || cv_distance(L[0], N) > cv_distance(L[0], M[0])*2 	)
+						continue;
 
-					src.push_back(L[0]);
-					src.push_back(M[1]);
-					src.push_back(N);
-					src.push_back(O[3]);
-
-					dst.push_back(Point2f(0, 0));
-					dst.push_back(Point2f(qr.cols, 0));
-					dst.push_back(Point2f(qr.cols, qr.rows));
-					dst.push_back(Point2f(0, qr.rows));
-
-					if (src.size() == 4 && dst.size() == 4)			// Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
-					{
-						warp_matrix = getPerspectiveTransform(src, dst);
-						warpPerspective(image, qr_raw, warp_matrix, Size(qr.cols, qr.rows));
-						copyMakeBorder(qr_raw, qr, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
-
-						cvtColor(qr, qr_gray, CV_RGB2GRAY);
-						threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
-
-						//threshold(qr_gray, qr_thres, 0, 255, CV_THRESH_OTSU);
-						//for( int d=0 ; d < 4 ; d++){	src.pop_back(); dst.pop_back(); }
-					}
-
+					//threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
+					
 					//Draw contours on the image
 					drawContours(image, contours, top, Scalar(255, 200, 0), 2, 8, hierarchy, 0);
 					drawContours(image, contours, right, Scalar(0, 0, 255), 2, 8, hierarchy, 0);
@@ -405,6 +413,9 @@ int main(int argc, char **argv)
 						circle(traces, L[2], 2, Scalar(0, 0, 255), -1, 8, 0);
 						circle(traces, L[3], 2, Scalar(128, 128, 128), -1, 8, 0);
 
+						//printf(" L0 x is  %d , L0 y is %d ", L[0].x, L[0].y);
+
+
 						circle(traces, M[0], 2, Scalar(255, 255, 0), -1, 8, 0);
 						circle(traces, M[1], 2, Scalar(0, 255, 0), -1, 8, 0);
 						circle(traces, M[2], 2, Scalar(0, 0, 255), -1, 8, 0);
@@ -418,10 +429,37 @@ int main(int argc, char **argv)
 						// Draw point of the estimated 4th Corner of (entire) QR Code
 						circle(traces, N, 2, Scalar(255, 255, 255), -1, 8, 0);
 
+						//printf("L0(%f,%f), L2(%f,%f)", L[0].x, L[0].y, L[2].x, L[2].y);
+
+						//gray.at<uchar>(10, 200) = 255;
+						//printf("height is  %d ,  weight is ", int(gray.at<uchar>(700,1200)));
+						//printf("row range is  %d ", gray.weight );
+
+						int a = 0; // this is a landmark 
+						int codes[6];
+						int info_of_this_qr[5];
+
+						Mat testmat = qr_warper(L[0],M[1],N,O[3],image);
+
+						position_finder(L[0], M[1], O[3], info_of_this_qr);
+
+						code_digger(codes, testmat);
+
+					//	for (int i = 0; i < 5; i++)
+					//		printf("%d ", codes[i]);
+
+						info_of_this_qr[0] = decoder(codes);
+
+					
+						//printf(" data in info_of_this: ");
+					//	for (int i = 0; i < 6; i++)
+					//		printf("%d ", info_of_this_qr[i]);
+
+						list_insert(info_of_this_qr, allinfo);
+
 						// Draw the lines used for estimating the 4th Corner of QR Code
 						line(traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
 						line(traces, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
-
 
 						// Debug Prints
 					}
@@ -429,18 +467,17 @@ int main(int argc, char **argv)
 				}
 			}
 		}
-
 		imshow("Image", image);
 		imshow("Traces", traces);
-		//imshow ( "QR code", qr_thres );
+		//
 
 		key = waitKey(1);	// OPENCV: wait for 1ms before accessing next frame
 
 	}	// End of 'while' loop
 
 	// Always clean up because we're _IN C++ land!
-	colorResizer.reset();
-	kinectManager.reset();
+	//colorResizer.reset();
+	//kinectManager.reset();
 
 	return 0;
 }
@@ -453,6 +490,202 @@ int main(int argc, char **argv)
 
 // Function: Routine to get Distance between two points
 // Description: Given 2 points, the function returns the distance
+
+
+
+Mat qr_warper (Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
+	Mat area, area_raw, area_gray, area_thres;
+	vector<Point2f> src, dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
+									// dst - Destination Points to transform overlay image
+	Mat warp_matrix;
+	area_raw = Mat::zeros(QRSIZE, QRSIZE, CV_8UC3);
+	area = Mat::zeros(QRSIZE, QRSIZE, CV_8UC3);
+	area_gray = Mat::zeros(QRSIZE, QRSIZE, CV_8UC1);
+	area_thres = Mat::zeros(QRSIZE, QRSIZE, CV_8UC1);
+
+	src.push_back(N);
+	src.push_back(E);
+	src.push_back(S);
+	src.push_back(W);
+
+	dst.push_back(Point2f(0, 0));
+	dst.push_back(Point2f(area.cols, 0));
+	dst.push_back(Point2f(area.cols, area.rows));
+	dst.push_back(Point2f(0, area.rows));
+
+
+	if (src.size() == 4 && dst.size() == 4)			// Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
+	{
+		//printf("got four");
+		warp_matrix = getPerspectiveTransform(src, dst);
+		warpPerspective(graph, area_raw, warp_matrix, Size(area.cols, area.rows));
+		copyMakeBorder(area_raw, area, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
+
+		cvtColor(area, area_gray, CV_RGB2GRAY);
+		imshow("area code", area_gray);
+	}
+	threshold(area_gray, area_gray, 127, 255, CV_THRESH_BINARY);
+	return area_gray;
+}
+
+int average_gray_scale(Mat input) {
+	int b = 0; 
+	int xmax, ymax;
+	int total_gray_scale = 0;
+	Mat graph;
+	//graph = Mat::zeros(input.size(), CV_8UC1);
+	graph = input;
+	
+	ymax = graph.rows - 1;
+	xmax = graph.cols - 1;
+	//printf("col is %d ", xmax);
+	//printf("row is %d ", ymax);
+	//printf("gray is %d ", int(graph.at<uchar>(0, 0)));
+
+		for (int x = 0; x < xmax; x++) {
+			for (int y = 0; y < ymax;y++) {
+				total_gray_scale = total_gray_scale + int(graph.at<uchar>(y,x));
+				//printf("(%d,%d)", y,x);
+				//printf(" %d ", int(graph.at<uchar>(y, x)));
+			}	
+		}
+		//printf("avg gray = %d " , total_gray_scale/(graph.rows*graph.cols));
+	return total_gray_scale / (graph.rows*graph.cols);
+	//return 0;
+}
+
+void code_digger(int code[], Mat qr) {
+		int col = qr.cols; 
+		int row = qr.rows;
+		int c_points[4] = { col/25*7, col / 25 * (7+2) ,col / 25 * (7+2+7) ,col / 25 * (7+2+7+2) };
+		int r_points[4] = { row / 25 * 7, row / 25 * (7 + 2) ,row / 25 * (7 + 2 + 7) ,row / 25 * (7 + 2 + 7 + 2) };
+		Mat temp_mat; 
+	
+		//this is area 0; 
+		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		temp_mat = temp_mat.rowRange(Range(0,r_points[0])); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[0] = 1;
+		else
+			code[0] = 0;
+	
+		//this is area 1; 
+		temp_mat = qr.colRange(Range(0, c_points[0])); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[1] = 1;
+		else
+			code[1] = 0;
+	
+		//this is area 2; 
+		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[2] = 1;
+		else
+			code[2] = 0;
+	
+		//this is area 3; 
+		temp_mat = qr.colRange(Range(c_points[3], col)); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[3] = 1;
+		else
+			code[3] = 0;
+	
+		//this is area 4; 
+		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[3], row)); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[4] = 1;
+		else
+			code[4] = 0;
+	
+		//this is area 5; 
+		temp_mat = qr.colRange(Range(c_points[3], col)); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[3], row)); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[5] = 1;
+		else
+			code[5] = 0;
+}
+
+int decoder(int code[]) {
+	int output = 0;
+	output = output + code[0] * 32;
+	output = output + code[1] * 16;
+	output = output + code[2] * 8;
+	output = output + code[3] * 4;
+	output = output + code[4] * 2;
+	output = output + code[5] * 1;
+	return output;
+}
+
+void position_finder(Point2f L, Point2f M, Point2f O, int info[5]) {
+	float degree = atan2(M.x-L.x, M.y-L.y) * 180 / 3.1415926;
+	info[4] = degree;
+	info[0] = -1;
+	info[1] = (M.x + L.x) / 2;
+	info[2] = (L.y + O.y) / 2;
+	info[3] = -1;
+}
+
+void list_manager(int list[idnumber][6]) {
+	printf(" start managing ");
+	for (int i = 0; i < idnumber; i++) {
+		if (list[i][0] != 99){
+			list[i][5]--;
+			printf(" No.%d -1,now is %d ",list[i][0],list[i][5]);
+			if (list[i][5] < 0) {
+				printf(" No.%d expired ", list[i][0]);
+				list[i][0] = 99;
+				list[i][1] = 0;
+				list[i][2] = 0;
+				list[i][3] = 0;
+				list[i][4] = 0;
+				list[i][5] = 0;
+			}
+		}
+	}
+}
+
+void list_insert(int input[5], int list[idnumber][6]) {
+	//printf(" start inserting ");
+	bool same = 0;
+	for (int i = 0; i < idnumber; i++) {
+		if (list[i][0] == input[0]) {
+			list[i][5] = lifetimeextand + list[i][5];
+			same = 1;
+			printf(" found same ");
+			printf("life time of No.%d at %d is %d ",list[i][0],i,list[i][5] );
+
+			if (list[i][5] > updatelimit) {
+				list[i][1] = input[1] * 0.2 + list[i][0] * 0.8;
+				list[i][2] = input[2] * 0.2 + list[i][0] * 0.8;
+				list[i][3] = input[3] * 0.2 + list[i][0] * 0.8;
+				list[i][4] = input[4] * 0.2 + list[i][0] * 0.8;
+				printf(" No.%d updated ", input[0]);
+			}
+		}
+	}
+
+	if(same==0){
+		//printf(" no same ");
+		for (int i = 0; i < idnumber; i++) {
+			if (list[i][0] == 99) {
+				//printf(" found umpty place ");
+				list[i][0] = input[0];
+				list[i][1] = input[1];
+				list[i][2] = input[2];
+				list[i][3] = input[3];
+				list[i][4] = input[4];
+				list[i][5] = lifetime;
+				printf("No. %d inserted at %d ", input[0], i);
+				return;
+			}
+		}
+	}
+}
 
 float cv_returnX(Point2f X) {
 	float number = X.x;
