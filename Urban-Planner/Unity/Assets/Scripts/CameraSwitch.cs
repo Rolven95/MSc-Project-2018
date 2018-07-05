@@ -5,19 +5,21 @@ using UnityEngine;
 public class CameraSwitch : MonoBehaviour
 {
 
-    public GameObject cameraOne;
-    public GameObject cameraTwo;
+    public GameObject cameramain;
+    public GameObject cameratop;
+    public GameObject cameravive;
+    
 
-    AudioListener cameraOneAudioLis;
-    AudioListener cameraTwoAudioLis;
+    //AudioListener cameraOneAudioLis;
+    //AudioListener cameraTwoAudioLis;
 
     // Use this for initialization
     void Start()
     {
 
         //Get Camera Listeners
-        cameraOneAudioLis = cameraOne.GetComponent<AudioListener>();
-        cameraTwoAudioLis = cameraTwo.GetComponent<AudioListener>();
+        //cameraOneAudioLis = cameraOne.GetComponent<AudioListener>();
+        //cameraTwoAudioLis = cameraTwo.GetComponent<AudioListener>();
 
         //Camera Position Set
         cameraPositionChange(PlayerPrefs.GetInt("CameraPosition"));
@@ -54,9 +56,9 @@ public class CameraSwitch : MonoBehaviour
     }
 
     //Camera change Logic
-    void cameraPositionChange(int camPosition)
-    {
-        if (camPosition > 1)
+    void cameraPositionChange(int camPosition){
+    
+        if (camPosition > 2)
         {
             camPosition = 0;
         }
@@ -67,22 +69,34 @@ public class CameraSwitch : MonoBehaviour
         //Set camera position 1
         if (camPosition == 0)
         {
-            cameraOne.SetActive(true);
-            cameraOneAudioLis.enabled = true;
+            cameramain.SetActive(true);
+            //cameraOneAudioLis.enabled = true;
 
-            cameraTwoAudioLis.enabled = false;
-            cameraTwo.SetActive(false);
+            //cameraTwoAudioLis.enabled = false;
+            cameratop.SetActive(false);
+            cameravive.SetActive(false);
         }
 
         //Set camera position 2
         if (camPosition == 1)
         {
-            cameraTwo.SetActive(true);
-            cameraTwoAudioLis.enabled = true;
+            cameramain.SetActive(false);
+            //cameraOneAudioLis.enabled = true;
 
-            cameraOneAudioLis.enabled = false;
-            cameraOne.SetActive(false);
+            //cameraTwoAudioLis.enabled = false;
+            cameratop.SetActive(true);
+            cameravive.SetActive(false);
         }
+        if(camPosition == 2){
 
+
+            cameramain.SetActive(false);
+            //cameraOneAudioLis.enabled = true;
+
+            //cameraTwoAudioLis.enabled = false;
+            cameratop.SetActive(false);
+            cameravive.SetActive(true);
+
+        }
     }
 }
