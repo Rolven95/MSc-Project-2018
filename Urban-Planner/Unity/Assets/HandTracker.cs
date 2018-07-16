@@ -146,7 +146,7 @@ public class HandTracker : MonoBehaviour
         // Update the sensor and underlying 
         IHandTracker.updateSensor();
         IHandTracker.updateProcessor();
-        IHandTracker.updateHandTracker();
+        //IHandTracker.updateHandTracker();
 
         // Now try and get the current depth frame
         bool success = IHandTracker.QueryCurrentContourFrame();

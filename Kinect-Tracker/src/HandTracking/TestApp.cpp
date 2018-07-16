@@ -11,8 +11,8 @@
 #include <opencv2\highgui\highgui.hpp>
 #include <iostream>
 
-#define RESIZE_WIDTH 1280
-#define RESIZE_HEIGHT 720
+#define RESIZE_WIDTH 512
+#define RESIZE_HEIGHT 512
 
 int main(int argc, char **argv)
 {

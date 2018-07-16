@@ -3,8 +3,8 @@
 
 #include <iostream>
 
-#define RESIZE_WIDTH 1280
-#define RESIZE_HEIGHT 720
+#define RESIZE_WIDTH 512
+#define RESIZE_HEIGHT 512
 
 using SensorManager = boost::shared_ptr<ar_sandbox::KinectManager>;
 using DepthResizer = boost::shared_ptr<ar_sandbox::DepthFrameResizer>;
@@ -18,6 +18,8 @@ static SensorManager sensorManager;
 static DepthResizer depthResizer;
 static ColorResizer colorResizer;
 static HandTracker handTracker;
+//static QRFrameProcessor qrFrameProcessor;
+
 
 //static int RES = 0;
 //static bool isInited = false;
@@ -51,7 +53,7 @@ void initEnv()
 		depthResizer->setResizeParameters(RESIZE_HEIGHT, RESIZE_WIDTH);
 		colorResizer->setResizeParameters(RESIZE_HEIGHT, RESIZE_WIDTH);
 		cv::Size processParams = depthResizer->getSizeParameters(); // Both have the same params, so the depth one is representative of both
-		//handTracker = boost::make_shared<ar_sandbox::HandTracker>(processParams);
+		handTracker = boost::make_shared<ar_sandbox::HandTracker>(processParams);
 
 		// Create the static buffers
 		colorFrameBuffer = boost::make_shared<BYTE[]>(processParams.width * processParams.height * 4); // RGBA data

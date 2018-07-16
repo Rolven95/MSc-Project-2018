@@ -19,6 +19,7 @@ if (isInited) { \
 using SensorManager = boost::shared_ptr<ar_sandbox::KinectManager>;
 using Resizer = boost::shared_ptr<ar_sandbox::DepthFrameResizer>;
 using HandTracker = boost::shared_ptr<ar_sandbox::HandTracker>;
+using QRFrameProcessor = boost::shared_ptr<ar_sandbox::QRFrameProcessor>;
 
 // Instantiation
 static int RES = 0;
@@ -26,6 +27,7 @@ static bool isInited = false;
 static SensorManager sensorManager;
 static Resizer resizer;
 static HandTracker handTracker;
+static boost::shared_ptr<ar_sandbox::QRFrameProcessor> qrFrameProcessor;
 
 // Implementaton
 void initEnv()
@@ -41,6 +43,8 @@ void initEnv()
 		cv::Size processParams = resizer->getSizeParameters();
 		handTracker = HandTracker(new ar_sandbox::HandTracker(processParams));
 
+		qrFrameProcessor = boost::make_shared<ar_sandbox::QRFrameProcessor>();
+
 		isInited = true;
 	}
 }
@@ -53,6 +57,8 @@ void destroyEnv()
 		resizer.reset();
 		sensorManager.reset();
 		RES = 1;
+
+		qrFrameProcessor.reset();
 
 		isInited = false;
 	}
@@ -79,7 +85,7 @@ void updateSensor()
 
 void updateProcessor()
 {
-
+	
 }
 
 void updateHandTracker()

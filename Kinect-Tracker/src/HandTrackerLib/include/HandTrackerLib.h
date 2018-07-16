@@ -22,6 +22,7 @@ namespace ar_sandbox
 	class HANDTRACKER_API DepthFrameResizer;
 	class HANDTRACKER_API HandTracker;
 	class HANDTRACKER_API Hand;
+	class HANDTRACKER_API QRFrameProcessor;
 }
 
 #include "KinectTypes.h"
