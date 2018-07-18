@@ -7,8 +7,8 @@
 #include <boost\smart_ptr\shared_ptr.hpp>
 
 // Definitions of constants
-#define RESIZE_WIDTH 512
-#define RESIZE_HEIGHT 512
+#define RESIZE_WIDTH 1280
+#define RESIZE_HEIGHT 720
 
 #define DO_IF_INITED(x) \
 if (isInited) { \

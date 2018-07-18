@@ -37,4 +37,6 @@ extern "C"
 	bool HANDTRACKER_API getDepthFrame(unsigned short **interOpPtr, int *frameLength);
 	bool HANDTRACKER_API getColorFrame(BYTE **interOpPtr, int *frameLength);
 	bool HANDTRACKER_API getContourFrame(BYTE **interOpPtr, int *frameLength);
+	bool HANDTRACKER_API getQRTraceFrame(BYTE **interOpPtr, int *frameLength);
+	bool HANDTRACKER_API getQRResult(int qrresult[30][6]);
 }
