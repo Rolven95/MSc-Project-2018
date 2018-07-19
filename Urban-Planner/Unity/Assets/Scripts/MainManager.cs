@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Runtime.InteropServices;
+using System;
 
 //struct ObjectInfomation
 //{
@@ -56,7 +58,7 @@ public class MainManager : MonoBehaviour
 
         for (int i =0; i< TotalNumber; i++) {
             CurrentLocation[i] = new float[4];
-            allinfo[i] = new int[5];
+            allinfo[i] = new int[6];
 
 
             CurrentLocation[i][0]= Object_List[i].transform.position.x;
@@ -70,29 +72,28 @@ public class MainManager : MonoBehaviour
             allinfo[i][2] = 0;
             allinfo[i][3] = 0;
             allinfo[i][4] = 0;
-            
-}
-        
+
+        }
+
         allinfo[0][0] = 0;
         allinfo[0][1] = 20;
         allinfo[0][2] = 20;
         allinfo[0][3] = 20;
         allinfo[0][4] = 99;
 
-        for (int i = 0; i < TotalNumber; i++)
-        {
-            Debug.Log(allinfo[i][0]);
-            Debug.Log(allinfo[i][1]);
-            Debug.Log(allinfo[i][2]);
-            Debug.Log(allinfo[i][3]);
-            Debug.Log(allinfo[i][4]);
-        }
+        //for (int i = 0; i < TotalNumber; i++)
+        //{
+        //    Debug.Log(allinfo[i][0]);
+        //    Debug.Log(allinfo[i][1]);
+        //    Debug.Log(allinfo[i][2]);
+        //    Debug.Log(allinfo[i][3]);
+        //    Debug.Log(allinfo[i][4]);
+        //}
     }
 
     // Update is called once per frame
     void Update()
     {
-
 
         //Debug.Log("Distance:");
         QR_Reader(allinfo);
@@ -105,11 +106,37 @@ public class MainManager : MonoBehaviour
 
     }
 
-    
+    int[,] qrresult = new int[30, 6];
 
     public void QR_Reader(int[][] newdata) { // get image and read QR codes. Put infomation in the allinfo[][]
-        
-        
+
+        // Update the sensor and underlying 
+        //QRAPI.updateSensor();
+        //QRAPI.updateProcessor();
+
+        //// Update the result info from Kinect API
+        //if (QRAPI.getQRResult(qrresult))
+        //{
+        //    for (int i = 0; i < 30; i++)
+        //    {
+        //        if (qrresult[i, 0] != 99 && qrresult[i, 0] >= 0)
+        //        {
+        //            for (int j = 0; j < 6; j++)
+        //            {
+        //                //newdata[i][j] = qrresult[i,j];
+        //            }
+        //        }
+        //    }
+        //}
+
+        //for (int i = 0; i< 30; i++)
+        //{
+        //    for (int j = 0; j<6; j++)
+        //    {
+        //        newdata[i][j] = newdata[i][j] + 1;
+        //    }
+        //}
+
         return; 
     }
 
@@ -155,15 +182,41 @@ public class MainManager : MonoBehaviour
 
     void change_position(float[] Current, GameObject Objects) // 
     {
-       // Objects.transform.position = new Vector3(Objects.transform.position.x /100*99 +  Current[0]/100, Objects.transform.position.y / 100 * 99 +  Current[1]/100, Objects.transform.position.z / 100 * 99 + Current[2]/100);
-
-
+        Objects.transform.position = new Vector3(Objects.transform.position.x /100*99 +  Current[0]/100, Objects.transform.position.y / 100 * 99 +  Current[1]/100, Objects.transform.position.z / 100 * 99 + Current[2]/100);
         Objects.transform.Rotate(new Vector3(0, 1, 0), Space.Self);
         //Objects.transform.Rotate(new Vector3(0, Current[3] - Objects.transform.rotation.x, 0), rotateSpace);
 
         Debug.Log("position changed");
     }
 
+    private static class QRAPI
+    {
+        [DllImport("HandTrackerLib")]
+        public static extern void initEnv();
 
+        [DllImport("HandTrackerLib")]
+        public static extern void destroyEnv();
 
+        [DllImport("HandTrackerLib")]
+        public static extern void updateSensor();
+
+        [DllImport("HandTrackerLib")]
+        public static extern void updateProcessor();
+
+        [DllImport("HandTrackerLib")]
+        public static extern bool getQRResult(int[,] qrresult);
+
+        [DllImport("HandTrackerLib")]
+        public static extern bool testFun(int[] array);
+    }
+
+    void Awake()
+    {
+        //QRAPI.initEnv();
+    }
+
+    void OnApplicationQuit()
+    {
+        //QRAPI.destroyEnv();
+    }
 }
