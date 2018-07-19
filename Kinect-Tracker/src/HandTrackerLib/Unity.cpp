@@ -1,10 +1,12 @@
 #include "stdafx.h"
 #include "Unity.h"
-
+#include <opencv2/opencv.hpp>
 #include <iostream>
+#include <cmath>
+#include <omp.h>
 
-#define RESIZE_WIDTH 512
-#define RESIZE_HEIGHT 512
+#define RESIZE_WIDTH 1280
+#define RESIZE_HEIGHT 720
 
 using SensorManager = boost::shared_ptr<ar_sandbox::KinectManager>;
 using DepthResizer = boost::shared_ptr<ar_sandbox::DepthFrameResizer>;
@@ -12,13 +14,14 @@ using ColorResizer = boost::shared_ptr<ar_sandbox::ColorFrameResizer>;
 using HandTracker = boost::shared_ptr<ar_sandbox::HandTracker>;
 using QRFrameProcessor = boost::shared_ptr<ar_sandbox::QRFrameProcessor>; // Alias for the shared pointer storage
 
+
 static int RES = 0;
 static bool isInited = false;
 static SensorManager sensorManager;
 static DepthResizer depthResizer;
 static ColorResizer colorResizer;
 static HandTracker handTracker;
-//static QRFrameProcessor qrFrameProcessor;
+static QRFrameProcessor qrFrameProcessor;
 
 
 //static int RES = 0;
@@ -35,7 +38,7 @@ static boost::shared_ptr<BYTE[]> colorFrameBuffer;
 static boost::shared_ptr<unsigned short[]> depthFrameBuffer;
 static boost::shared_ptr<unsigned short[]> depthFrameBufferClone;
 static boost::shared_ptr<BYTE[]> contourFrameBuffer;
-static boost::shared_ptr<ar_sandbox::QRFrameProcessor> qrFrameProcessor;
+//static boost::shared_ptr<ar_sandbox::QRFrameProcessor> qrFrameProcessor;
 
 // Environment management
 void initEnv()
@@ -159,7 +162,7 @@ bool getColorFrame(BYTE **interOpPtr, int *frameLength)
 		colorResizer->copyFrameBuffer(colorMat);
 
 		*interOpPtr = colorFrameBuffer.get();
-		*frameLength = colorMat.rows * colorMat.cols;
+		*frameLength = colorMat.rows * colorMat.cols * 4;
 
 		return true;
 	}
@@ -182,19 +185,44 @@ bool getContourFrame(BYTE **interOpPtr, int *frameLen)
 	return false;
 }
 
-//bool getQRTraceFrame(BYTE **interOpPtr, int *frameLength)
-//{
-//	if (isInited)
-//	{
-//		cv::Mat TraceMat = cv::Mat(512, 512, CV_8UC4, Traces.get());
-//		colorResizer->copyFrameBuffer(TraceMat);
-//
-//		*interOpPtr = Traces.get();
-//		*frameLength = TraceMat.rows * TraceMat.cols;
-//
-//		return true;
-//	}
-//
-//	return false; // Return false if we aren't even inited
-//}
+bool getQRTraceFrame(BYTE **interOpPtr, int *frameLength)
+{
+	if (isInited)
+	{
+		
+		cv::Mat TraceMat = cv::Mat(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorFrameBuffer.get());
+		qrFrameProcessor->copyFrameBuffer(TraceMat);
+		TraceMat = qrFrameProcessor->Traces;
+		if (TraceMat.rows != 0)
+		{
+			imshow("trace", TraceMat);
+		}		
+		*interOpPtr = colorFrameBuffer.get();
+		*frameLength = TraceMat.rows * TraceMat.cols * 4;
+		return true;
+	}
 
+	return false; // Return false if we aren't even inited
+}
+
+bool getQRResult(int (*qrArray)[30][6])
+{
+	for (int i = 0; i < 30; i++)
+	{
+		for (int j = 0; j < 6; j++)
+		{
+			(*qrArray)[i][j] = qrFrameProcessor->allinfo[i][j];		
+		}
+	}
+	return true;
+}
+
+bool testFun(int (*a)[10])
+{
+	for (int i = 0; i < 10; i++)
+	{
+		(*a)[i] = (*a)[i] + 1;
+	}
+	
+	return true;
+}

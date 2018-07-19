@@ -628,6 +628,7 @@ void position_finder(Point2f L, Point2f M, Point2f O, int info[5]) {
 	info[1] = (M.x + L.x) / 2;
 	info[2] = (L.y + O.y) / 2;
 	info[3] = -1;
+	//info[5] = 0;
 }
 
 void list_manager(int list[idnumber][6]) {
@@ -636,7 +637,7 @@ void list_manager(int list[idnumber][6]) {
 		if (list[i][0] != 99){
 			list[i][5]--;
 			printf(" No.%d -1,now is %d ",list[i][0],list[i][5]);
-			if (list[i][5] < 0) {
+			if (list[i][5] <= 0) {
 				printf(" No.%d expired ", list[i][0]);
 				list[i][0] = 99;
 				list[i][1] = 0;

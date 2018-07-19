@@ -82,7 +82,7 @@ public class HandTracker : MonoBehaviour
 
             bool success = getContourFrame(ref ptrFrame, ref frameLen);
 
-            //Debug.Log("Contour frame len is : " + frameLen);
+            Debug.Log("Contour frame len is : " + frameLen);
 
             if (success)
             {
@@ -96,11 +96,11 @@ public class HandTracker : MonoBehaviour
 
                 // Now create the color array for texturing
                 // Bytes are reversed as the underlying OpenCV implementation uses BGR form
-                for (int i = 0, k = 0; i < 512; ++i)
+                for (int i = 0, k = 0; i < 1280; ++i)
                 {
-                    for (int j = 0; j < 512; ++j, k += 3)
+                    for (int j = 0; j < 720; ++j, k += 3)
                     {
-                        currentContourFrame[j + (i * 512)] = new Color(IHandTracker.currentContourData[k + 2], IHandTracker.currentContourData[k + 1], IHandTracker.currentContourData[k]);
+                        currentContourFrame[j + (i * 720)] = new Color(IHandTracker.currentContourData[k + 2], IHandTracker.currentContourData[k + 1], IHandTracker.currentContourData[k]);
                     }
                 }
             }
@@ -137,7 +137,7 @@ public class HandTracker : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        cameraFrame = new Texture2D(512, 512);
+        cameraFrame = new Texture2D(1280, 720);
     }
 
     // Update is called once per frame
@@ -146,7 +146,8 @@ public class HandTracker : MonoBehaviour
         // Update the sensor and underlying 
         IHandTracker.updateSensor();
         IHandTracker.updateProcessor();
-        //IHandTracker.updateHandTracker();
+        IHandTracker.updateHandTracker();
+
 
         // Now try and get the current depth frame
         bool success = IHandTracker.QueryCurrentContourFrame();
@@ -155,7 +156,9 @@ public class HandTracker : MonoBehaviour
             // If we have a frame, set the texture map to the frame data and display it
             Plane.GetComponent<Renderer>().material.mainTexture = cameraFrame;
             cameraFrame.SetPixels(IHandTracker.currentContourFrame);
+            //cameraFrame.LoadImage(IHandTracker.currentContourData, false);
             cameraFrame.Apply();
+            Debug.Log(cameraFrame.format);
         }
     }
 }

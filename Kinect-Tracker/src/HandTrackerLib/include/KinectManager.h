@@ -163,6 +163,7 @@ namespace ar_sandbox
 		~QRFrameProcessor()
 		{}
 
+
 		const int CV_QR_NORTH = 0;
 		const int CV_QR_EAST = 1;
 		const int CV_QR_SOUTH = 2;
@@ -179,21 +180,20 @@ namespace ar_sandbox
 		bool getIntersectionPoint(Point2f a1, Point2f a2, Point2f b1, Point2f b2, Point2f& intersection);
 		float cross(Point2f v1, Point2f v2);
 
+		Mat qr_warper(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph);
+		int average_gray_scale(Mat graph);
+		void position_finder(Point2f L, Point2f M, Point2f O, int info[5]);
+		int decoder(int code[]);
+		void code_digger(int code[], Mat qr);
+		void list_manager(int list[30][6]);
+		void list_insert(int input[5], int list[30][6]);
+
 		void processFrame(cv::Mat &colorFrame);
 
-	protected:
 		cv::Mat Traces;
+		int allinfo[30][6];
 	};
 
-	class ObjectInfo
-	{
-	public:
 
-	protected:
-		float X;
-		float Y;
-		float Depth;
-		float Rotation;
-		int ID;
-	};
+
 }
