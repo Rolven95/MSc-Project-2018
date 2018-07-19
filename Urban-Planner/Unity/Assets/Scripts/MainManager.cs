@@ -2,9 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+//struct ObjectInfomation
+//{
+//     int id;
+//     int x;
+//     int y;
+//     int z;
+//     int r;
+//};
+
 public class MainManager : MonoBehaviour
 {
-    public const int TotalNumber = 19;
+    public const int TotalNumber = 1;
 
     public GameObject[] Object_List = new GameObject[TotalNumber]; 
     //// 0-4
@@ -31,48 +40,104 @@ public class MainManager : MonoBehaviour
     //public GameObject bench3;
     //public GameObject bench4;//18
  
-    int[][] allinfo = new int[5][]; // [0]id,[1]x,[2]y,[3]z,[4]rotation, [5]lifetime 
-
-    float [][] CurrentLocation = new float[5][];
+    int[][] allinfo = new int[30][]; // [0]id,[1]x,[2]y,[3]z,[4]rotation, [5]lifetime 
    
+        
+
+    float [][] CurrentLocation = new float[30][]; //x,y,z,r
+
+    //ObjectInfomation[] AllCurrentLocation = new ObjectInfomation[TotalNumber];
+
+    public Space rotateSpace;
+
     void Start()
     {
         //this should be where load all location into the CurrentLocation[][]. Use CurrentLocation as a mapping table. 
-        
 
+        for (int i =0; i< TotalNumber; i++) {
+            CurrentLocation[i] = new float[4];
+            allinfo[i] = new int[5];
+
+
+            CurrentLocation[i][0]= Object_List[i].transform.position.x;
+            CurrentLocation[i][1]= Object_List[i].transform.position.y;
+            CurrentLocation[i][2]= Object_List[i].transform.position.z;
+
+            CurrentLocation[i][3]= Object_List[i].transform.rotation.y;
+
+            allinfo[i][0] = 99;
+            allinfo[i][1] = 0;
+            allinfo[i][2] = 0;
+            allinfo[i][3] = 0;
+            allinfo[i][4] = 0;
+            
+}
+        
+        allinfo[0][0] = 0;
+        allinfo[0][1] = 20;
+        allinfo[0][2] = 20;
+        allinfo[0][3] = 20;
+        allinfo[0][4] = 99;
+
+        for (int i = 0; i < TotalNumber; i++)
+        {
+            Debug.Log(allinfo[i][0]);
+            Debug.Log(allinfo[i][1]);
+            Debug.Log(allinfo[i][2]);
+            Debug.Log(allinfo[i][3]);
+            Debug.Log(allinfo[i][4]);
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
+
+
         //Debug.Log("Distance:");
         QR_Reader(allinfo);
 
         Location_Updater(CurrentLocation, allinfo);
 
         Object_Mover(CurrentLocation);
+
+
+
     }
 
     
 
     public void QR_Reader(int[][] newdata) { // get image and read QR codes. Put infomation in the allinfo[][]
         
+        
         return; 
     }
 
     public void Location_Updater(float[][] Current, int[][]QRinfo) { // put data into CurrentLocation[][], repackage data
+        Debug.Log("entered Location_Updater");
+        for (int i = 0; i < TotalNumber; i++)
+        {
 
-
+            Debug.Log("QRinfo[i][0]: " + QRinfo[i][0]);
+            if (QRinfo[i][0] != 99)
+            {
+                Current[QRinfo[i][0]][0] = QRinfo[i][1];
+                Current[QRinfo[i][0]][1] = QRinfo[i][2];
+                Current[QRinfo[i][0]][2] = QRinfo[i][3];
+                Current[QRinfo[i][0]][3] = QRinfo[i][4];
+                Debug.Log("Updated");
+            }
+            Debug.Log("Checked AllInfolist");
+        }
         return;
     }
 
-
+     
     public void Object_Mover(float[][] Current){ //use new locations to move objects  [id][x,y,z,rotation]
 
         for (int i = 0; i < TotalNumber; i++) {
-
             change_position(Current[i], Object_List[i]);
-
+            Debug.Log("Moved");
         }
 
         return;
@@ -88,19 +153,17 @@ public class MainManager : MonoBehaviour
 
 
 
-    void change_position(float[] Current, GameObject Objects) // this is a example method showing how to move objects. 
+    void change_position(float[] Current, GameObject Objects) // 
     {
-        Objects.transform.position = new Vector3(Objects.transform.position.x /10*9 +  Current[0]/10, Objects.transform.position.y / 10 * 9 +  Current[1]/10, Objects.transform.position.z / 10 * 9 + Current[2]/10);
+       // Objects.transform.position = new Vector3(Objects.transform.position.x /100*99 +  Current[0]/100, Objects.transform.position.y / 100 * 99 +  Current[1]/100, Objects.transform.position.z / 100 * 99 + Current[2]/100);
 
-        Objects.transform.rotation = Quaternion.Euler(new Vector3(Current[3], 0, 0));
-        //Objects.transform.position.y * 0.9 + 0.1* Current[1], Objects.transform.position.z * 0.9 + Current[2])
-        //if (Rock0.transform.position.z < 10)
-        //{
-        //    //Debug.Log("Moving the rock");
-        //    Rock0.transform.position = Vector3.Lerp(Rock0.transform.position, new Vector3(10, 10, 10), Time.deltaTime);
-        //    Debug.Log(Rock0.transform.position);
-        //}
-        //Rock0.transform.position = new Vector3 (10.0f, 10.0f, 10.0f);
-        Debug.Log("Update called");
+
+        Objects.transform.Rotate(new Vector3(0, 1, 0), Space.Self);
+        //Objects.transform.Rotate(new Vector3(0, Current[3] - Objects.transform.rotation.x, 0), rotateSpace);
+
+        Debug.Log("position changed");
     }
+
+
+
 }
