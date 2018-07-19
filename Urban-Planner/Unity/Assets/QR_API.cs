@@ -26,12 +26,16 @@ public class QR_API : MonoBehaviour {
         public static extern bool getColorFrame(ref IntPtr frameData, ref int frameLength);
 
         [DllImport("HandTrackerLib")]
-        public static extern bool getQRResult(ref int[][] qrresult);
+        public static extern bool getQRResult(int[,] qrresult);
+
+        [DllImport("HandTrackerLib")]
+        public static extern bool testFun(int[] array);
 
 
         public static byte[] currentColorData = null; // BGR frame stored as 32 bit integers
         public static Color[] currentColorFrame = null; // The color frame for Unity to use
-        public static int[][] qrresult = null; // the results from QRCode detected.
+        //public static int[,] qrresult = null; // the results from QRCode detected.
+       
 
         public static bool QueryCurrentColorFrame()
         {
@@ -84,18 +88,28 @@ public class QR_API : MonoBehaviour {
 
     //This is the UI reference
     public GameObject Plane;
-
+    public int[] b = new int[10];
+    public int[,] a = new int[30, 6];
+    
     // Use this for initialization
     void Start ()
     {
         cameraFrame = new Texture2D(1280, 720, TextureFormat.RGBA32, false);
-        if (QRAPI.qrresult == null)
-            QRAPI.qrresult = new int[30][];
+        //if (QRAPI.qrresult == null)
+        //    QRAPI.qrresult = new int[30,6];
+        QRAPI.testFun(b);
+        for (int j = 0; j < 10; j++)
+        {
+            Debug.Log(b[j]);
+        }
     }
-	
-	// Update is called once per frame
-	void Update ()
+
+    // Update is called once per frame
+    void Update ()
     {
+
+
+
         // Update the sensor and underlying 
         QRAPI.updateSensor();
         QRAPI.updateProcessor();
@@ -122,10 +136,42 @@ public class QR_API : MonoBehaviour {
         }
 
 
-        if (QRAPI.getQRResult(ref QRAPI.qrresult))
+
+
+        //for (int i = 0; i < 30; i++)
+        //{
+        //    for (int j = 0; j < 6; j++)
+        //    {
+        //        a[i, j] = 0;
+        //    }
+        //}
+        if (QRAPI.getQRResult(a))
         {
-            Debug.Log(QRAPI.qrresult);
+            for (int i = 0; i < 30; i++)
+            {
+                if (a[i, 0] != 99 && a[i, 0] >= 0)
+                {
+                    for (int q = 0; q < 6; q++)
+                    {
+                        Debug.Log(a[i, q]);
+                    }
+                }
+            }
         }
+
+        //if (QRAPI.getQRResult(ref QRAPI.qrresult))
+        //{
+        //    for (int i = 0; i < 30; i++)
+        //    {
+        //        if (QRAPI.qrresult[i, 0] != 99 && QRAPI.qrresult[i, 0] >= 0)
+        //        {
+        //            for (int q = 0; q < 6; q++)
+        //            {
+        //                Debug.Log(QRAPI.qrresult[i, q]);
+        //            }
+        //        }
+        //    }
+        //}
 
     }
 }

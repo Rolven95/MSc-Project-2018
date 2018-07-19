@@ -205,19 +205,24 @@ bool getQRTraceFrame(BYTE **interOpPtr, int *frameLength)
 	return false; // Return false if we aren't even inited
 }
 
-bool getQRResult(int qrresult[30][6])
+bool getQRResult(int (*qrArray)[30][6])
 {
-	qrresult = qrFrameProcessor->allinfo;
-
-		for (int i = 0; i < 30; i++) {
-			if (qrresult[i][0] != 99 && qrresult[i][0] >=0) {
-				printf(" data in all info : ");
-				for (int q = 0; q < 6; q++)
-				{
-					printf("%d ", qrresult[i][q]);
-				}
-			}
+	for (int i = 0; i < 30; i++)
+	{
+		for (int j = 0; j < 6; j++)
+		{
+			(*qrArray)[i][j] = qrFrameProcessor->allinfo[i][j];		
 		}
+	}
+	return true;
+}
 
+bool testFun(int (*a)[10])
+{
+	for (int i = 0; i < 10; i++)
+	{
+		(*a)[i] = (*a)[i] + 1;
+	}
+	
 	return true;
 }

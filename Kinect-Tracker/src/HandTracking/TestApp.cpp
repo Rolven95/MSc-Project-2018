@@ -39,12 +39,26 @@ int main(int argc, char **argv)
 
 	initEnv();
 
+
+	int b[10];
+	for (int i = 0; i < 10; i++)
+	{
+		b[i] = 0;
+	}
+	testFun(&b);
+	for (int i = 0; i < 10; i++)
+	{
+		printf("%d ", b[i]);
+	}
+
+
+
 	for (;;)
 	{
 		updateSensor();
 		updateProcessor();
 		//updateHandTracker();
-
+	
 		//getContourFrame(&bp, intP);
 		//getDepthFrame(&depthsp, intP);
 		//getColorFrame(&colorsp, intP);
@@ -53,20 +67,21 @@ int main(int argc, char **argv)
 		//cv::Mat depthFrame(512, 512, CV_16U, depthsp);
 		//imshow("Depth display", depthFrame);
 		//if (cv::waitKey(1) >= 0) break;
-		
-		getQRResult(qrresults);
-		//if (getQRResult(qrresults))
-		//{
-		//	for (int i = 0; i < idnumber; i++) {
-		//		if (qrresults[i][0] != 99 && qrresults[i][0] >=0) {
-		//			printf(" data in all info : ");
-		//			for (int q = 0; q < 6; q++)
-		//			{
-		//				printf("%d ", qrresults[i][q]);
-		//			}
-		//		}
-		//	}
-		//}
+
+
+		//getQRResult(&qrresults);
+		if (getQRResult(&qrresults))
+		{
+			for (int i = 0; i < idnumber; i++) {
+				if (qrresults[i][0] != 99 && qrresults[i][0] >=0) {
+					printf(" data in all info : ");
+					for (int q = 0; q < 6; q++)
+					{
+						printf("%d ", qrresults[i][q]);
+					}
+				}
+			}
+		}
 
 		cv::Mat colorFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorsp);
 		imshow("Color display", colorFrame);

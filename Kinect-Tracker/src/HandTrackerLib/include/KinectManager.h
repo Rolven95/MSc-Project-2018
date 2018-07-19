@@ -192,6 +192,8 @@ namespace ar_sandbox
 
 		cv::Mat Traces;
 		int allinfo[30][6];
-
 	};
+
+
+
 }

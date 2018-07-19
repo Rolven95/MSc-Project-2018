@@ -697,6 +697,7 @@ namespace ar_sandbox
 		}
 	}
 
+
 	void QRFrameProcessor::processFrame(cv::Mat & colorFrame)
 	{
 		cv::resize(colorFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
@@ -1070,16 +1071,5 @@ namespace ar_sandbox
 					}
 			}
 		}
-		/*for (int i = 0; i < idnumber; i++) {
-			if (allinfo[i][0] != 99) {
-
-				if (allinfo[i][0] >= 0)
-				{
-					printf(" data in all info : ");
-					for (int q = 0; q < 6; q++)
-						printf("%d ", allinfo[i][q]);
-				}
-			}
-		}*/
 	}
 }
