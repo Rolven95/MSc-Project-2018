@@ -103,10 +103,12 @@ public class MainManager : MonoBehaviour
     public void QR_Reader(int[][] newdata) { // get image and read QR codes. Put infomation in the allinfo[][]
 
         newdata[0][0] = 0;
-        newdata[0][1] = 20;
-        newdata[0][2] = 20;
-        newdata[0][3] = 20;
+        newdata[0][1] = 80;
+        newdata[0][2] = 0;
+        newdata[0][3] = 30;
         newdata[0][4] = 300;
+
+
         // Update the sensor and underlying 
         //QRAPI.updateSensor();
         //QRAPI.updateProcessor();
@@ -126,9 +128,10 @@ public class MainManager : MonoBehaviour
         //    }
         //}
 
-        //for (int i = 0; i< 30; i++)
+        //for (int i = 0; i < TotalNumber; i++)
         //{
-        //    for (int j = 0; j<6; j++)
+        //    newdata[i][0] = 0;
+        //    for (int j = 1; j < 6; j++)
         //    {
         //        newdata[i][j] = newdata[i][j] + 1;
         //    }
