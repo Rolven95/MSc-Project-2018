@@ -59,8 +59,7 @@ public class MainManager : MonoBehaviour
         for (int i =0; i< TotalNumber; i++) {
             CurrentLocation[i] = new float[4];
             allinfo[i] = new int[6];
-
-
+           
             CurrentLocation[i][0]= Object_List[i].transform.position.x;
             CurrentLocation[i][1]= Object_List[i].transform.position.y;
             CurrentLocation[i][2]= Object_List[i].transform.position.z;
@@ -74,21 +73,14 @@ public class MainManager : MonoBehaviour
             allinfo[i][4] = 0;
 
         }
+        for (int i = TotalNumber; i < allinfo.Length; i++) {
+            allinfo[i][0] = 99;
+            allinfo[i][1] = 0;
+            allinfo[i][2] = 0;
+            allinfo[i][3] = 0;
+            allinfo[i][4] = 0;
+        }
 
-        allinfo[0][0] = 0;
-        allinfo[0][1] = 20;
-        allinfo[0][2] = 20;
-        allinfo[0][3] = 20;
-        allinfo[0][4] = 99;
-
-        //for (int i = 0; i < TotalNumber; i++)
-        //{
-        //    Debug.Log(allinfo[i][0]);
-        //    Debug.Log(allinfo[i][1]);
-        //    Debug.Log(allinfo[i][2]);
-        //    Debug.Log(allinfo[i][3]);
-        //    Debug.Log(allinfo[i][4]);
-        //}
     }
 
     // Update is called once per frame
@@ -110,6 +102,11 @@ public class MainManager : MonoBehaviour
 
     public void QR_Reader(int[][] newdata) { // get image and read QR codes. Put infomation in the allinfo[][]
 
+        newdata[0][0] = 0;
+        newdata[0][1] = 20;
+        newdata[0][2] = 20;
+        newdata[0][3] = 20;
+        newdata[0][4] = 300;
         // Update the sensor and underlying 
         //QRAPI.updateSensor();
         //QRAPI.updateProcessor();
@@ -183,10 +180,14 @@ public class MainManager : MonoBehaviour
     void change_position(float[] Current, GameObject Objects) // 
     {
         Objects.transform.position = new Vector3(Objects.transform.position.x /100*99 +  Current[0]/100, Objects.transform.position.y / 100 * 99 +  Current[1]/100, Objects.transform.position.z / 100 * 99 + Current[2]/100);
-        Objects.transform.Rotate(new Vector3(0, 1, 0), Space.Self);
+
+        if (Objects.transform.rotation.y != Current[3])
+           // Objects.transform.Rotate(0, (1), 0, Space.World);
+            Objects.transform.Rotate(0, ((Current[3]-180)/180-Objects.transform.rotation.y), 0, Space.World);
+        Debug.Log("Objects.transform.rotation.y:"+ Objects.transform.rotation.y);
         //Objects.transform.Rotate(new Vector3(0, Current[3] - Objects.transform.rotation.x, 0), rotateSpace);
 
-        Debug.Log("position changed");
+        //Debug.Log("position changed");
     }
 
     private static class QRAPI
