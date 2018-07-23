@@ -90,27 +90,38 @@ add_custom_target (
 
 elseif (WIN32) # We only support OSX or Windows, both 64 bit
 
-add_custom_target (
-	${AUTO_APP_NAME}
-	ALL
-	COMMAND
-		"C:/Program Files/Unity/Editor/Unity.exe"
-		-quit
-		-batchmode
-		-projectPath ${CMAKE_SOURCE_DIR}/unity
-		-buildWindows64Player
-		${CMAKE_SOURCE_DIR}/build/${AUTO_APP_NAME}.exe
-	COMMENT
-		"Building ${AUTO_APP_NAME}..."		
-)
+	if (UnityGame_FOUND)
+
+		add_custom_target (
+			${AUTO_APP_NAME}
+			ALL
+			COMMAND
+				${UnityGame_EXECUTABLE}
+				-quit
+				-batchmode
+				-projectPath ${CMAKE_SOURCE_DIR}/unity
+				-buildWindows64Player
+				${CMAKE_SOURCE_DIR}/build/${AUTO_APP_NAME}.exe
+			COMMENT
+				"Building ${AUTO_APP_NAME}..."		
+		)
+
+	else ()
+
+		message (
+			SEND_ERROR
+			"Unity3D installation not found"
+		)
+
+	endif ()
 
 else () # Just echo a statement on any other system
 
-add_custom_target (
-	${AUTO_APP_NAME}
-	ALL
-	COMMAND
-		echo "Only supported on OSX and Windows, soz!"
-)
+	add_custom_target (
+		${AUTO_APP_NAME}
+		ALL
+		COMMAND
+			echo "Only supported on OSX and Windows, soz!"
+	)
 
 endif()
