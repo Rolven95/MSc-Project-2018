@@ -523,7 +523,7 @@ namespace ar_sandbox
 			copyMakeBorder(area_raw, area, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
 
 			cvtColor(area, area_gray, CV_RGB2GRAY);
-			imshow("area code", area_gray);
+			//imshow("area code", area_gray);
 		}
 		threshold(area_gray, area_gray, 127, 255, CV_THRESH_BINARY);
 		return area_gray;
@@ -642,10 +642,14 @@ namespace ar_sandbox
 				printf("life time of No.%d at %d is %d ", list[i][0], i, list[i][5]);
 
 				if (list[i][5] > updatelimit) {
-					list[i][1] = input[1] * 0.2 + list[i][0] * 0.8;
+					list[i][1] = input[1];
+					list[i][2] = input[2];
+					list[i][3] = input[3];
+					list[i][4] = input[4];
+					/*list[i][1] = input[1] * 0.2 + list[i][0] * 0.8;
 					list[i][2] = input[2] * 0.2 + list[i][0] * 0.8;
 					list[i][3] = input[3] * 0.2 + list[i][0] * 0.8;
-					list[i][4] = input[4] * 0.2 + list[i][0] * 0.8;
+					list[i][4] = input[4] * 0.2 + list[i][0] * 0.8;*/
 					printf(" No.%d updated ", input[0]);
 				}
 			}
@@ -709,7 +713,7 @@ namespace ar_sandbox
 
 		list_manager(allinfo);
 
-
+		imshow("colorFrame", colorFrame);
 
 		vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
@@ -914,8 +918,6 @@ namespace ar_sandbox
 						vector<Point2f> L, M, O, tempL, tempM, tempO;
 						Point2f N;
 
-
-
 						cv_getVertices(contours, top, slope, tempL);
 						cv_getVertices(contours, right, slope, tempM);
 						cv_getVertices(contours, bottom, slope, tempO);
@@ -928,20 +930,18 @@ namespace ar_sandbox
 
 						//threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
 
-
 						//Draw contours on the image
 						drawContours(colorFrame, contours, top, Scalar(255, 200, 0), 2, 8, hierarchy, 0);
 						drawContours(colorFrame, contours, right, Scalar(0, 0, 255), 2, 8, hierarchy, 0);
 						drawContours(colorFrame, contours, bottom, Scalar(255, 0, 100), 2, 8, hierarchy, 0);
 
+						
 						//printf("draw contours");
-
 
 						int DBG = 1;
 						// Insert Debug instructions here
 						if (DBG == 1)
-						{
-					
+						{					
 							// Debug Prints
 							// Visualizations for ease of understanding
 							if (slope > 5)
@@ -961,7 +961,6 @@ namespace ar_sandbox
 							circle(Traces, L[3], 2, Scalar(128, 128, 128), -1, 8, 0);
 
 							//printf(" L0 x is  %d , L0 y is %d ", L[0].x, L[0].y);
-
 
 							circle(Traces, M[0], 2, Scalar(255, 255, 0), -1, 8, 0);
 							circle(Traces, M[1], 2, Scalar(0, 255, 0), -1, 8, 0);
@@ -984,11 +983,9 @@ namespace ar_sandbox
 
 							//int a = average_gray_scale(L[0], L[1], L[2], L[3], image);
 
-
 							// Draw the lines used for estimating the 4th Corner of QR Code
 							line(Traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
 							line(Traces, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
-
 							
 							// Debug Prints
 						}
