@@ -101,13 +101,7 @@ public class MainManager : MonoBehaviour
 
     public void QR_Reader(int[][] newdata) { // get image and read QR codes. Put infomation in the allinfo[][]
 
-<<<<<<< HEAD
 
-        //newdata[0][0] = 0;
-        //newdata[0][1] = 20;
-        //newdata[0][2] = 20;
-        //newdata[0][3] = 20;
-        //newdata[0][4] = 300;
 
         //Update the sensor and underlying
         QRAPI.updateSensor();
