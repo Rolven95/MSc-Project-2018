@@ -539,8 +539,8 @@ namespace ar_sandbox
 	}
 
 	void QRFrameProcessor::code_digger(int code[], Mat qr) {
-		int col = qr.cols;
-		int row = qr.rows;
+		int col =  qr.rows;//x
+		int row =  qr.cols;//y
 		int c_points[4] = { col / 25 * 7, col / 25 * (7 + 2) ,col / 25 * (7 + 2 + 7) ,col / 25 * (7 + 2 + 7 + 2) };
 		int r_points[4] = { row / 25 * 7, row / 25 * (7 + 2) ,row / 25 * (7 + 2 + 7) ,row / 25 * (7 + 2 + 7 + 2) };
 		Mat temp_mat;
