@@ -10,16 +10,22 @@ public class MainManager : MonoBehaviour
 
     public int[] TemCurrentDegree;
     
-
     public GameObject[] Object_List = new GameObject[TotalNumber]; 
+
     int[][] allinfo = new int[30][]; // [0]id,[1]x,[2]y,[3]z,[4]rotation, [5]lifetime 
    
     float [][] CurrentLocation = new float[TotalNumber][]; //x,y,z,r
 
     public Space rotateSpace;
-
+    public DateTime[] TimeList;
+    public int[] TotalTime;
+    public int FrameCounter;
+    
     void Start()
     {
+        TimeList = new DateTime[4];
+        TotalTime = new int[4];
+        FrameCounter = 0; 
         //this should be where load all location into the CurrentLocation[][]. Use CurrentLocation as a mapping table. 
         TemCurrentDegree = new int[TotalNumber];
         
@@ -49,12 +55,27 @@ public class MainManager : MonoBehaviour
     void Update()
     {
 
+        FrameCounter++;
         //Debug.Log("Distance:");
+        TimeList[0] = System.DateTime.Now; 
         QR_Reader(allinfo);
-
+        TimeList[1] = System.DateTime.Now;
         Location_Updater(CurrentLocation, allinfo);
-
+        TimeList[2] = System.DateTime.Now;
         Object_Mover(CurrentLocation);
+        TimeList[3] = System.DateTime.Now;
+        if (FrameCounter >= 500)
+            Debug.Log(TotalTime[0]+" "+TotalTime[1] + " "+ TotalTime[2] + " "+ TotalTime[3] );
+        TotalTime[0] += (TimeList[1] - TimeList[0]).Milliseconds;
+        TotalTime[1] += (TimeList[2] - TimeList[1]).Milliseconds;
+        TotalTime[2] += (TimeList[3] - TimeList[2]).Milliseconds;
+        TotalTime[3] += (TimeList[3] - TimeList[0]).Milliseconds;
+
+        
+        //Debug.Log("QR_Reader:"+ (TimeList[1]- TimeList[0]).TotalMilliseconds 
+        //    + "Location_Updater:" + (TimeList[2] - TimeList[1]).TotalMilliseconds
+        //    + "Object_Mover:" + (TimeList[3] - TimeList[2]).TotalMilliseconds
+        //    + "Total:" + (TimeList[3] - TimeList[0]).TotalMilliseconds);
 
     }
 
@@ -72,7 +93,7 @@ public class MainManager : MonoBehaviour
             for (int i = 0; i < TotalNumber; i++)
             {
                 if(qrresult[i, 0] != 99)
-                 Debug.Log("ID:" + qrresult[i, 0]);
+                 //Debug.Log("ID:" + qrresult[i, 0]);
 
                 if (qrresult[i, 0] != 99 && Check_range(qrresult[i, 0]))
                 {
@@ -82,7 +103,7 @@ public class MainManager : MonoBehaviour
                     newdata[i][3] = -1*(qrresult[i, 2]*2200/ 7200 - 110);
                     newdata[i][4] = qrresult[i, 4];
 
-                    Debug.Log("ID:"+newdata[i][0]+" " +newdata[i][1] + " " + newdata[i][2] + " " + newdata[i][3] + " " + newdata[i][4]);
+                    //Debug.Log("ID:"+newdata[i][0]+" " +newdata[i][1] + " " + newdata[i][2] + " " + newdata[i][3] + " " + newdata[i][4]);
                 }
             }
         }
@@ -90,23 +111,23 @@ public class MainManager : MonoBehaviour
     }
 
     public void Location_Updater(float[][] Current, int[][]QRinfo) { // put data into CurrentLocation[][], repackage data
-        Debug.Log("entered Location_Updater");
+        //Debug.Log("entered Location_Updater");
         for (int i = 0; i < TotalNumber; i++)
         {
             
             if (QRinfo[i][0] != 99)
             {
-                Debug.Log("QRinfo[i][0]: " + QRinfo[i][0]);
-                Debug.Log("i=" + i);
+                //Debug.Log("QRinfo[i][0]: " + QRinfo[i][0]);
+                //Debug.Log("i=" + i);
                 Current[QRinfo[i][0]][0] = QRinfo[i][1];
                 Current[QRinfo[i][0]][1] = QRinfo[i][2];
                 Current[QRinfo[i][0]][2] = QRinfo[i][3];
                 Current[QRinfo[i][0]][3] = QRinfo[i][4] - TemCurrentDegree[i];
 
                 TemCurrentDegree[i] = QRinfo[i][4];
-                Debug.Log("Updated");
+                //Debug.Log("Updated");
             }
-            Debug.Log("Checked AllInfolist");
+            //Debug.Log("Checked AllInfolist");
         }
         return;
     }
@@ -115,7 +136,7 @@ public class MainManager : MonoBehaviour
 
         for (int i = 0; i < TotalNumber; i++) {
             change_position(Current[i], Object_List[i]);
-            Debug.Log("Moved");
+            //Debug.Log("Moved");
         }
         return;
     }
