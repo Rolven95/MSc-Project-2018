@@ -17,19 +17,21 @@ public class MainManager : MonoBehaviour
     float [][] CurrentLocation = new float[TotalNumber][]; //x,y,z,r
 
     public Space rotateSpace;
-  //  public DateTime[] TimeList;
-  //  public int[] TotalTime;
-  //  public int FrameCounter;
+
+   // public DateTime[] TimeList;
+    //public int[] TotalTime;
+    //public int FrameCounter;
     
     void Start()
     {
-      //  TimeList = new DateTime[4];
-      //  TotalTime = new int[4];
-      //  FrameCounter = 0; 
+       // TimeList = new DateTime[4];
+       // TotalTime = new int[4];
+        //FrameCounter = 0; 
+
         //this should be where load all location into the CurrentLocation[][]. Use CurrentLocation as a mapping table. 
         TemCurrentDegree = new int[TotalNumber];
         
-        Debug.Log("CurrentLength(3)="+ CurrentLocation.Length);
+        //Debug.Log("CurrentLength(3)="+ CurrentLocation.Length);
         for (int i =0; i< CurrentLocation.Length; i++) {
             
             CurrentLocation[i] = new float[4];
@@ -55,6 +57,7 @@ public class MainManager : MonoBehaviour
     void Update()
     {
 
+
       //  FrameCounter++;
         //Debug.Log("Distance:");
       //  TimeList[0] = System.DateTime.Now; 
@@ -68,14 +71,7 @@ public class MainManager : MonoBehaviour
         //    Debug.Log(TotalTime[0]+" "+TotalTime[1] + " "+ TotalTime[2] + " "+ TotalTime[3] );
         //TotalTime[0] += (TimeList[1] - TimeList[0]).Milliseconds;
         //TotalTime[1] += (TimeList[2] - TimeList[1]).Milliseconds;
-        //TotalTime[2] += (TimeList[3] - TimeList[2]).Milliseconds;
-        //TotalTime[3] += (TimeList[3] - TimeList[0]).Milliseconds;
 
-        
-        //Debug.Log("QR_Reader:"+ (TimeList[1]- TimeList[0]).TotalMilliseconds 
-        //    + "Location_Updater:" + (TimeList[2] - TimeList[1]).TotalMilliseconds
-        //    + "Object_Mover:" + (TimeList[3] - TimeList[2]).TotalMilliseconds
-        //    + "Total:" + (TimeList[3] - TimeList[0]).TotalMilliseconds);
 
     }
 
@@ -95,16 +91,18 @@ public class MainManager : MonoBehaviour
                 if(qrresult[i, 0] != 99)
                  //Debug.Log("ID:" + qrresult[i, 0]);
 
-                if (qrresult[i, 0] != 99 && Check_range(qrresult[i, 0]))
+                if (qrresult[i, 0] != 99 && Check_range(qrresult[i, 0]) && qrresult[i, 5]>10)
                 {
                     newdata[i][0] = qrresult[i, 0];
                     newdata[i][1] = -1 * (qrresult[i, 1] * 2200 / 12800 - 110);
                     newdata[i][2] = 0;
                     newdata[i][3] = -1*(qrresult[i, 2]*2200/ 7200 - 110);
                     newdata[i][4] = qrresult[i, 4];
-                        Debug.Log("ID:" + qrresult[i, 0] + " " + qrresult[i, 1] + " " + qrresult[i, 2] + " " + qrresult[i, 3]);
-                        //Debug.Log("ID:"+newdata[i][0]+" " +newdata[i][1] + " " + newdata[i][2] + " " + newdata[i][3] + " " + newdata[i][4]);
-                }
+
+                    Debug.Log("ID:" + qrresult[i, 0] + " " + qrresult[i, 1] + " " + qrresult[i,2] + " " + qrresult[i, 3] + " " + qrresult[i, 4] +" "+qrresult[i, 5]);
+                    //Debug.Log("ID:"+newdata[i][0]+" " +newdata[i][1] + " " + newdata[i][2] + " " + newdata[i][3] + " " + newdata[i][4]);
+                    }
+
             }
         }
         return; 
