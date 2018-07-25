@@ -28,6 +28,9 @@ int main(int argc, char **argv)
 	BYTE *colorsp = nullptr;
 	int *intP = new int;
 
+	
+
+
 	int qrresults[30][6];
 	//for (int i = 0; i < 30; i++)
 	//{
@@ -39,7 +42,7 @@ int main(int argc, char **argv)
 
 	initEnv();
 
-
+/*
 	int b[10];
 	for (int i = 0; i < 10; i++)
 	{
@@ -50,7 +53,7 @@ int main(int argc, char **argv)
 	{
 		printf("%d ", b[i]);
 	}
-
+*/
 
 
 	for (;;)
@@ -60,17 +63,14 @@ int main(int argc, char **argv)
 		//updateHandTracker();
 	
 		//getContourFrame(&bp, intP);
-		//getDepthFrame(&depthsp, intP);
+		getDepthFrame(&depthsp, intP);
 		//getColorFrame(&colorsp, intP);
 		getQRTraceFrame(&colorsp, intP);
-		// Show all three frames in separate windows
-		//cv::Mat depthFrame(512, 512, CV_16U, depthsp);
-		//imshow("Depth display", depthFrame);
-		//if (cv::waitKey(1) >= 0) break;
+
 
 
 		//getQRResult(&qrresults);
-		if (getQRResult(&qrresults))
+		/*if (getQRResult(&qrresults))
 		{
 			for (int i = 0; i < idnumber; i++) {
 				if (qrresults[i][0] != 99 && qrresults[i][0] >=0) {
@@ -81,11 +81,32 @@ int main(int argc, char **argv)
 					}
 				}
 			}
-		}
+		}*/
+
+		// Show all three frames in separate windows
+		cv::Mat depthFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_16U, depthsp);
+		imshow("Depth display", depthFrame);
+		if (cv::waitKey(1) >= 0) break;
+
+		cv::Mat copydepthFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC1);
+		depthFrame.convertTo(copydepthFrame, CV_8SC1, 255.0 / 4500);
+		imshow("2nd Depth display", copydepthFrame);
+		if (cv::waitKey(1) >= 0) break;
+
+
+		//for (int i = 0; i < depthFrame.rows; i++)
+		//{
+		//	uchar * ptr = depthFrame.ptr<uchar>(i);
+		//	//uchar * pButterRun = (uchar*);
+		//}
+		//printf("",depthFrame.);
+
+
 
 		cv::Mat colorFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorsp);
 		imshow("Color display", colorFrame);
 		if (cv::waitKey(1) >= 0) break;
+
 
 
 		/*cv::Mat contourFrame(512, 512, CV_8UC3, bp);
