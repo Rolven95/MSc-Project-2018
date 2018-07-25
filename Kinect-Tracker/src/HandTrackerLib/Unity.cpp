@@ -78,7 +78,7 @@ void destroyEnv()
 	{
 		handTracker.reset();
 		depthResizer.reset();
-		colorResizer.reset();
+		//colorResizer.reset();
 		sensorManager.reset();
 		qrFrameProcessor.reset();
 
@@ -110,7 +110,7 @@ void updateProcessor()
 		cv::Mat depthFrame = sensorManager->getDepthMat();
 		cv::Mat colorFrame = sensorManager->getColorMat();
 		depthResizer->processFrame(depthFrame);
-		colorResizer->processFrame(colorFrame);
+		//colorResizer->processFrame(colorFrame);
 		qrFrameProcessor->processFrame(colorFrame);
 	}
 }

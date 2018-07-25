@@ -360,6 +360,7 @@ namespace ar_sandbox
 		if (slope > 5 || slope < -5)
 		{
 
+#pragma omp parallel for  
 			for (int i = 0; i < contours[c_id].size(); i++)
 			{
 				pd1 = cv_lineEquation(C, A, contours[c_id][i]);	// Position of point w.r.t the diagonal AC 
@@ -389,7 +390,7 @@ namespace ar_sandbox
 		{
 			int halfx = (A.x + B.x) / 2;
 			int halfy = (A.y + D.y) / 2;
-
+#pragma omp parallel for  
 			for (int i = 0; i < contours[c_id].size(); i++)
 			{
 				if ((contours[c_id][i].x < halfx) && (contours[c_id][i].y <= halfy))
@@ -546,8 +547,14 @@ namespace ar_sandbox
 		Mat temp_mat;
 
 		//this is area 0; 
+
+
 		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
 		temp_mat = temp_mat.rowRange(Range(0, r_points[0])); // y
+
+
+
+
 		if (average_gray_scale(temp_mat) < blackorwhite)
 			code[0] = 1;
 		else
@@ -618,7 +625,7 @@ namespace ar_sandbox
 		//printf("col is %d ", xmax);
 		//printf("row is %d ", ymax);
 		//printf("gray is %d ", int(graph.at<uchar>(0, 0)));
-
+#pragma omp parallel for  
 		for (int x = 0; x < xmax; x++) {
 			for (int y = 0; y < ymax; y++) {
 				total_gray_scale = total_gray_scale + int(graph.at<uchar>(y, x));
@@ -638,7 +645,7 @@ namespace ar_sandbox
 			if (list[i][0] == input[0]) {
 				list[i][5] = lifetimeextand + list[i][5];
 				same = 1;
-				printf(" found same ");
+				//printf(" found same ");
 				printf("life time of No.%d at %d is %d ", list[i][0], i, list[i][5]);
 
 				if (list[i][5] > updatelimit) {
@@ -650,7 +657,7 @@ namespace ar_sandbox
 					list[i][2] = input[2] * 0.2 + list[i][0] * 0.8;
 					list[i][3] = input[3] * 0.2 + list[i][0] * 0.8;
 					list[i][4] = input[4] * 0.2 + list[i][0] * 0.8;*/
-					printf(" No.%d updated ", input[0]);
+					//printf(" No.%d updated ", input[0]);
 				}
 			}
 		}
@@ -666,7 +673,7 @@ namespace ar_sandbox
 					list[i][3] = input[3];
 					list[i][4] = input[4];
 					list[i][5] = lifetime;
-					printf("No. %d inserted at %d ", input[0], i);
+					//printf("No. %d inserted at %d ", input[0], i);
 					return;
 				}
 			}
@@ -705,6 +712,10 @@ namespace ar_sandbox
 	void QRFrameProcessor::processFrame(cv::Mat & colorFrame)
 	{
 		cv::resize(colorFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
+		Mat temp_mat;
+		temp_mat = colorFrame.colRange(Range(700, 1700)); //x
+		temp_mat = temp_mat.rowRange(Range(300, 1000)); // y
+		temp_mat.copyTo(colorFrame);
 		// Creation of Intermediate 'Image' Objects required later
 		Mat gray(colorFrame.size(), CV_MAKETYPE(colorFrame.depth(), 1));			// To hold Grayscale Image
 		Mat edges(colorFrame.size(), CV_MAKETYPE(colorFrame.depth(), 1));			// To hold Grayscale Image
@@ -738,6 +749,7 @@ namespace ar_sandbox
 		vector<Moments> mu(contours.size());
 		vector<Point2f> mc(contours.size());
 		//#pragma omp parallel for  
+#pragma omp parallel for  
 		for (int i = 0; i < contours.size(); i++)
 		{
 			mu[i] = moments(contours[i], false);
@@ -753,6 +765,7 @@ namespace ar_sandbox
 		for (int i = 0; i < idnumber / 3; i++)
 			qrcode[i][0] = -1;
 		//#pragma omp parallel for  
+#pragma omp parallel for  
 		for (int i = 0; i < contours.size(); i++)
 		{
 			//Find the approximated polygon of the contour we are examining
@@ -780,7 +793,8 @@ namespace ar_sandbox
 			float alldistance[idnumber][idnumber]; //theorical maxium size
 			float smalldistance = 9999;
 
-			//#pragma omp parallel for  
+			
+#pragma omp parallel for  
 			for (int i = 0; i < mark; i++)  //actrual reading
 			{
 				for (int q = 0; q < mark; q++)
@@ -795,6 +809,7 @@ namespace ar_sandbox
 
 			int qrcounter = 0; //how many qr codes, should be mark/3
 							   //#pragma omp parallel for  		
+#pragma omp parallel for  			
 			for (int i = 0; i < mark; i++) //check all points
 			{
 				//alldistance[i][i] = -1;
@@ -859,6 +874,7 @@ namespace ar_sandbox
 			if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
 			{
 				//#pragma omp parallel for  
+#pragma omp parallel for  				
 				for (int i = 0; i < qrcounter; i++) {
 
 
@@ -935,10 +951,10 @@ namespace ar_sandbox
 						drawContours(colorFrame, contours, right, Scalar(0, 0, 255), 2, 8, hierarchy, 0);
 						drawContours(colorFrame, contours, bottom, Scalar(255, 0, 100), 2, 8, hierarchy, 0);
 
-						
+						//imshow("should have contours",colorFrame);
 						//printf("draw contours");
 
-						int DBG = 1;
+						int DBG = 0;
 						// Insert Debug instructions here
 						if (DBG == 1)
 						{					
@@ -1068,5 +1084,6 @@ namespace ar_sandbox
 					}
 			}
 		}
+
 	}
 }
