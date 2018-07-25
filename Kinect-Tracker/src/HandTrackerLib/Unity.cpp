@@ -5,8 +5,8 @@
 #include <cmath>
 #include <omp.h>
 
-#define RESIZE_WIDTH 1280
-#define RESIZE_HEIGHT 720
+#define RESIZE_WIDTH 1920
+#define RESIZE_HEIGHT 1080
 
 using SensorManager = boost::shared_ptr<ar_sandbox::KinectManager>;
 using DepthResizer = boost::shared_ptr<ar_sandbox::DepthFrameResizer>;

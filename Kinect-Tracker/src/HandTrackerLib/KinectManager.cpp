@@ -11,8 +11,8 @@ using namespace cv;
 using namespace std;
 
 #define idnumber 30
-#define RESIZE_WIDTH 1280
-#define RESIZE_HEIGHT 720
+#define RESIZE_WIDTH 1920
+#define RESIZE_HEIGHT 1080
 #define QRSIZE 128
 #define blackorwhite 180
 #define lifetime 5

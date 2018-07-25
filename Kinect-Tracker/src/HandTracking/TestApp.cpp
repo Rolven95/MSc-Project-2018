@@ -11,8 +11,8 @@
 #include <opencv2\highgui\highgui.hpp>
 #include <iostream>
 
-#define RESIZE_WIDTH 1280
-#define RESIZE_HEIGHT 720
+#define RESIZE_WIDTH 1920
+#define RESIZE_HEIGHT 1080
 #define idnumber 30
 int main(int argc, char **argv)
 {
