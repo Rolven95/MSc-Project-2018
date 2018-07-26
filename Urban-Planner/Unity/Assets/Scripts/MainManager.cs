@@ -91,12 +91,12 @@ public class MainManager : MonoBehaviour
                 if(qrresult[i, 0] != 99)
                  //Debug.Log("ID:" + qrresult[i, 0]);
 
-                if (qrresult[i, 0] != 99 && Check_range(qrresult[i, 0]) && qrresult[i, 5]>10)
+                if (qrresult[i, 0] != 99 && Check_range(qrresult[i, 0]))
                 {
                     newdata[i][0] = qrresult[i, 0];
-                    newdata[i][1] = -1 * (qrresult[i, 1] * 2200 / 12800 - 110);
+                    newdata[i][1] = -1 * (qrresult[i, 1] / 6 - 50);
                     newdata[i][2] = 0;
-                    newdata[i][3] = -1*(qrresult[i, 2]*2200/ 7200 - 110);
+                    newdata[i][3] = -1*(qrresult[i, 2] / 6 - 50);
                     newdata[i][4] = qrresult[i, 4];
 
                     Debug.Log("ID:" + qrresult[i, 0] + " " + qrresult[i, 1] + " " + qrresult[i,2] + " " + qrresult[i, 3] + " " + qrresult[i, 4] +" "+qrresult[i, 5]);
