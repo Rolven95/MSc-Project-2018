@@ -84,14 +84,14 @@ int main(int argc, char **argv)
 		}*/
 
 		// Show all three frames in separate windows
-		cv::Mat depthFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_16U, depthsp);
-		imshow("Depth display", depthFrame);
-		if (cv::waitKey(1) >= 0) break;
+		//cv::Mat depthFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_16U, depthsp);
+		//imshow("Depth display", depthFrame);
+		//if (cv::waitKey(1) >= 0) break;
 
-		cv::Mat copydepthFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC1);
-		depthFrame.convertTo(copydepthFrame, CV_8SC1, 255.0 / 4500);
-		imshow("2nd Depth display", copydepthFrame);
-		if (cv::waitKey(1) >= 0) break;
+		//cv::Mat copydepthFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC1);
+		//depthFrame.convertTo(copydepthFrame, CV_8SC1, 255.0 / 4500);
+		//imshow("2nd Depth display", copydepthFrame);
+		//if (cv::waitKey(1) >= 0) break;
 
 
 		//for (int i = 0; i < depthFrame.rows; i++)

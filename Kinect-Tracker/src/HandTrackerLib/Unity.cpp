@@ -133,7 +133,7 @@ void setResizeProcessorParams(int width, int height)
 	if (isInited)
 	{
 		depthResizer->setResizeParameters(height, width);
-		colorResizer->setResizeParameters(height, width);
+		//colorResizer->setResizeParameters(height, width);
 	}
 }
 
@@ -192,11 +192,6 @@ bool getQRTraceFrame(BYTE **interOpPtr, int *frameLength)
 		
 		cv::Mat TraceMat = cv::Mat(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorFrameBuffer.get());
 		qrFrameProcessor->copyFrameBuffer(TraceMat);
-		TraceMat = qrFrameProcessor->Traces;
-		if (TraceMat.rows != 0)
-		{
-			imshow("trace", TraceMat);
-		}		
 		*interOpPtr = colorFrameBuffer.get();
 		*frameLength = TraceMat.rows * TraceMat.cols * 4;
 		return true;

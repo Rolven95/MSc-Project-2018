@@ -626,6 +626,7 @@ namespace ar_sandbox
 		//printf("row is %d ", ymax);
 		//printf("gray is %d ", int(graph.at<uchar>(0, 0)));
 #pragma omp parallel for  
+		//to do:
 		for (int x = 0; x < xmax; x++) {
 			for (int y = 0; y < ymax; y++) {
 				total_gray_scale = total_gray_scale + int(graph.at<uchar>(y, x));
@@ -653,11 +654,6 @@ namespace ar_sandbox
 					list[i][2] = input[2];
 					list[i][3] = input[3];
 					list[i][4] = input[4];
-					/*list[i][1] = input[1] * 0.2 + list[i][0] * 0.8;
-					list[i][2] = input[2] * 0.2 + list[i][0] * 0.8;
-					list[i][3] = input[3] * 0.2 + list[i][0] * 0.8;
-					list[i][4] = input[4] * 0.2 + list[i][0] * 0.8;*/
-					//printf(" No.%d updated ", input[0]);
 				}
 			}
 		}
@@ -683,19 +679,12 @@ namespace ar_sandbox
 	void QRFrameProcessor::list_manager(int list[idnumber][6]) {
 		//printf(" start managing ");
 		for (int i = 0; i < idnumber; i++) {
-			if (list[i][0] != 99) {
-				
-			/*	if (list[i][0] >= 0)
-				{
-					printf(" data in all info : ");
-					for (int q = 0; q < 6; q++)
-						printf("%d ", list[i][q]);
-				}*/
-				
+			if (list[i][0] != 99) {							
 
-				list[i][5]--;
+				list[i][5]--; // life time -1 per frame
 				//printf(" No.%d -1,now is %d ", list[i][0], list[i][5]);
-				if (list[i][5] < 0) {
+
+				if (list[i][5] < 0) { // when life time < 0, we reset this array.
 					//printf(" No.%d expired ", list[i][0]);
 					list[i][0] = 99;
 					list[i][1] = 0;
@@ -711,11 +700,15 @@ namespace ar_sandbox
 
 	void QRFrameProcessor::processFrame(cv::Mat & colorFrame)
 	{
-		cv::resize(colorFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
+		
+
+		// we crop the image to reduce the pixels
 		Mat temp_mat;
 		temp_mat = colorFrame.colRange(Range(700, 1700)); //x
 		temp_mat = temp_mat.rowRange(Range(300, 1000)); // y
 		temp_mat.copyTo(colorFrame);
+
+
 		// Creation of Intermediate 'Image' Objects required later
 		Mat gray(colorFrame.size(), CV_MAKETYPE(colorFrame.depth(), 1));			// To hold Grayscale Image
 		Mat edges(colorFrame.size(), CV_MAKETYPE(colorFrame.depth(), 1));			// To hold Grayscale Image
@@ -724,7 +717,7 @@ namespace ar_sandbox
 
 		list_manager(allinfo);
 
-		imshow("colorFrame", colorFrame);
+		//imshow("colorFrame", colorFrame);
 
 		vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
@@ -794,7 +787,7 @@ namespace ar_sandbox
 			float smalldistance = 9999;
 
 			
-#pragma omp parallel for  
+//#pragma omp parallel for  
 			for (int i = 0; i < mark; i++)  //actrual reading
 			{
 				for (int q = 0; q < mark; q++)
@@ -808,8 +801,8 @@ namespace ar_sandbox
 			//printf(" small dis = %f ", smalldistance);
 
 			int qrcounter = 0; //how many qr codes, should be mark/3
-							   //#pragma omp parallel for  		
-#pragma omp parallel for  			
+							  	
+//#pragma omp parallel for  			
 			for (int i = 0; i < mark; i++) //check all points
 			{
 				//alldistance[i][i] = -1;
@@ -951,8 +944,6 @@ namespace ar_sandbox
 						drawContours(colorFrame, contours, right, Scalar(0, 0, 255), 2, 8, hierarchy, 0);
 						drawContours(colorFrame, contours, bottom, Scalar(255, 0, 100), 2, 8, hierarchy, 0);
 
-						//imshow("should have contours",colorFrame);
-						//printf("draw contours");
 
 						int DBG = 0;
 						// Insert Debug instructions here
@@ -1055,7 +1046,7 @@ namespace ar_sandbox
 							line(colorFrame, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
 						}
 
-						int a = 0; // this is a landmark 
+						// int a = 0; // this is a landmark 
 						int codes[6];
 						int info_of_this_qr[5];
 
@@ -1065,25 +1056,17 @@ namespace ar_sandbox
 
 						code_digger(codes, testmat);
 
-						//	for (int i = 0; i < 5; i++)
-						//		printf("%d ", codes[i]);
-
-						info_of_this_qr[0] = decoder(codes);
-
-
-						/*printf(" data in info_of_this: ");
-							for (int i = 0; i < 6; i++)
-								printf("%d ", info_of_this_qr[i]);*/
+						info_of_this_qr[0] = decoder(codes);	
 
 						list_insert(info_of_this_qr, allinfo);
-
-						//printf(" data in allinfo: ");
-						//for (int i = 0; i < 6; i++)
-						//printf("%d ", allinfo[i]);
-
 					}
 			}
 		}
+		cv::resize(colorFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
 
+		// this is the monitor window to show color image.
+		Mat monitor(200, 140, CV_8UC3);
+		cv::resize(colorFrame, monitor, cv::Size(200, 140), 0, 0, cv::INTER_CUBIC);
+		imshow("monitor", monitor);
 	}
 }
