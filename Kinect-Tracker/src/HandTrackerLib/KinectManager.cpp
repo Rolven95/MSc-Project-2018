@@ -704,8 +704,10 @@ namespace ar_sandbox
 
 		// we crop the image to reduce the pixels
 		Mat temp_mat;
-		temp_mat = colorFrame.colRange(Range(700, 1700)); //x
-		temp_mat = temp_mat.rowRange(Range(300, 1000)); // y
+		temp_mat = colorFrame.colRange(Range(800, 1400)); //x
+		temp_mat = temp_mat.rowRange(Range(300, 700)); // y
+		//temp_mat = colorFrame.colRange(Range(700, 1700)); //x
+		//temp_mat = temp_mat.rowRange(Range(300, 1000)); // y
 		temp_mat.copyTo(colorFrame);
 
 
@@ -1065,8 +1067,8 @@ namespace ar_sandbox
 		cv::resize(colorFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
 
 		// this is the monitor window to show color image.
-		Mat monitor(200, 140, CV_8UC3);
-		cv::resize(colorFrame, monitor, cv::Size(200, 140), 0, 0, cv::INTER_CUBIC);
+		Mat monitor(200, 135, CV_8UC3);
+		cv::resize(colorFrame, monitor, cv::Size(200, 135), 0, 0, cv::INTER_CUBIC);
 		imshow("monitor", monitor);
 	}
 }
