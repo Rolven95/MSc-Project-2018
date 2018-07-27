@@ -96,9 +96,8 @@ public class MainManager : MonoBehaviour
                     newdata[i][0] = qrresult[i, 0];
                     newdata[i][1] = -1 * (qrresult[i, 1] / 6 - 50);
                     newdata[i][2] = 0;
-                    newdata[i][3] = -1*(qrresult[i, 2] / 6 - 50);
+                    newdata[i][3] = -1*(qrresult[i, 2] / 4 - 50);
                     newdata[i][4] = qrresult[i, 4];
-
                     Debug.Log("ID:" + qrresult[i, 0] + " " + qrresult[i, 1] + " " + qrresult[i,2] + " " + qrresult[i, 3] + " " + qrresult[i, 4] +" "+qrresult[i, 5]);
                     //Debug.Log("ID:"+newdata[i][0]+" " +newdata[i][1] + " " + newdata[i][2] + " " + newdata[i][3] + " " + newdata[i][4]);
                     }
