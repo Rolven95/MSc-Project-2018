@@ -11,8 +11,14 @@ using namespace cv;
 using namespace std;
 
 #define idnumber 30
-#define RESIZE_WIDTH 1280
-#define RESIZE_HEIGHT 720
+#define RESIZE_WIDTH 1920
+#define RESIZE_HEIGHT 1080
+#define QRSIZE 128
+#define blackorwhite 180
+#define lifetime 5
+#define lifetimeextand 5
+#define updatelimit 10
+
 
 namespace ar_sandbox
 {
@@ -354,6 +360,7 @@ namespace ar_sandbox
 		if (slope > 5 || slope < -5)
 		{
 
+#pragma omp parallel for  
 			for (int i = 0; i < contours[c_id].size(); i++)
 			{
 				pd1 = cv_lineEquation(C, A, contours[c_id][i]);	// Position of point w.r.t the diagonal AC 
@@ -383,7 +390,7 @@ namespace ar_sandbox
 		{
 			int halfx = (A.x + B.x) / 2;
 			int halfy = (A.y + D.y) / 2;
-
+#pragma omp parallel for  
 			for (int i = 0; i < contours[c_id].size(); i++)
 			{
 				if ((contours[c_id][i].x < halfx) && (contours[c_id][i].y <= halfy))
@@ -487,11 +494,232 @@ namespace ar_sandbox
 		return v1.x*v2.y - v1.y*v2.x;
 	}
 
+
+	Mat QRFrameProcessor::qr_warper(Point2f N, Point2f E, Point2f S, Point2f W, Mat graph) {
+		Mat area, area_raw, area_gray, area_thres;
+		vector<Point2f> src, dst;		// src - Source Points basically the 4 end co-ordinates of the overlay image
+										// dst - Destination Points to transform overlay image
+		Mat warp_matrix;
+		area_raw = Mat::zeros(QRSIZE, QRSIZE, CV_8UC3);
+		area = Mat::zeros(QRSIZE, QRSIZE, CV_8UC3);
+		area_gray = Mat::zeros(QRSIZE, QRSIZE, CV_8UC1);
+		area_thres = Mat::zeros(QRSIZE, QRSIZE, CV_8UC1);
+
+		src.push_back(N);
+		src.push_back(E);
+		src.push_back(S);
+		src.push_back(W);
+
+		dst.push_back(Point2f(0, 0));
+		dst.push_back(Point2f(area.cols, 0));
+		dst.push_back(Point2f(area.cols, area.rows));
+		dst.push_back(Point2f(0, area.rows));
+
+
+		if (src.size() == 4 && dst.size() == 4)			// Failsafe for WarpMatrix Calculation to have only 4 Points with src and dst
+		{
+			//printf("got four");
+			warp_matrix = getPerspectiveTransform(src, dst);
+			warpPerspective(graph, area_raw, warp_matrix, Size(area.cols, area.rows));
+			copyMakeBorder(area_raw, area, 10, 10, 10, 10, BORDER_CONSTANT, Scalar(255, 255, 255));
+
+			cvtColor(area, area_gray, CV_RGB2GRAY);
+			//imshow("area code", area_gray);
+		}
+		threshold(area_gray, area_gray, 127, 255, CV_THRESH_BINARY);
+		return area_gray;
+	}
+
+	void QRFrameProcessor::position_finder(Point2f L, Point2f M, Point2f O, int info[5]) {
+		float degree = atan2(M.x - L.x, M.y - L.y) * 180 / 3.1415926;
+		info[4] = degree;
+		info[0] = -1;
+		info[1] = (M.x + L.x) / 2;
+		info[2] = (L.y + O.y) / 2;
+		info[3] = -1;
+	}
+
+	void QRFrameProcessor::code_digger(int code[], Mat qr) {
+		int col =  qr.rows;//x
+		int row =  qr.cols;//y
+		int c_points[4] = { col / 25 * 7, col / 25 * (7 + 2) ,col / 25 * (7 + 2 + 7) ,col / 25 * (7 + 2 + 7 + 2) };
+		int r_points[4] = { row / 25 * 7, row / 25 * (7 + 2) ,row / 25 * (7 + 2 + 7) ,row / 25 * (7 + 2 + 7 + 2) };
+		Mat temp_mat;
+
+		//this is area 0; 
+
+
+		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		temp_mat = temp_mat.rowRange(Range(0, r_points[0])); // y
+
+
+
+
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[0] = 1;
+		else
+			code[0] = 0;
+
+		//this is area 1; 
+		temp_mat = qr.colRange(Range(0, c_points[0])); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[1] = 1;
+		else
+			code[1] = 0;
+
+		//this is area 2; 
+		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[2] = 1;
+		else
+			code[2] = 0;
+
+		//this is area 3; 
+		temp_mat = qr.colRange(Range(c_points[3], col)); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[3] = 1;
+		else
+			code[3] = 0;
+
+		//this is area 4; 
+		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[3], row)); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[4] = 1;
+		else
+			code[4] = 0;
+
+		//this is area 5; 
+		temp_mat = qr.colRange(Range(c_points[3], col)); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[3], row)); // y
+		if (average_gray_scale(temp_mat) < blackorwhite)
+			code[5] = 1;
+		else
+			code[5] = 0;
+	}
+
+	int QRFrameProcessor::decoder(int code[]) {
+		int output = 0;
+		output = output + code[0] * 32;
+		output = output + code[1] * 16;
+		output = output + code[2] * 8;
+		output = output + code[3] * 4;
+		output = output + code[4] * 2;
+		output = output + code[5] * 1;
+		return output;
+	}
+
+	int QRFrameProcessor::average_gray_scale(Mat input) {
+		int b = 0;
+		int xmax, ymax;
+		int total_gray_scale = 0;
+		Mat graph;
+		//graph = Mat::zeros(input.size(), CV_8UC1);
+		graph = input;
+
+		ymax = graph.rows - 1;
+		xmax = graph.cols - 1;
+		//printf("col is %d ", xmax);
+		//printf("row is %d ", ymax);
+		//printf("gray is %d ", int(graph.at<uchar>(0, 0)));
+#pragma omp parallel for  
+		//to do:
+		for (int x = 0; x < xmax; x++) {
+			for (int y = 0; y < ymax; y++) {
+				total_gray_scale = total_gray_scale + int(graph.at<uchar>(y, x));
+				//printf("(%d,%d)", y,x);
+				//printf(" %d ", int(graph.at<uchar>(y, x)));
+			}
+		}
+		//printf("avg gray = %d " , total_gray_scale/(graph.rows*graph.cols));
+		return total_gray_scale / (graph.rows*graph.cols);
+		//return 0;
+	}
+
+	void QRFrameProcessor::list_insert(int input[5], int list[idnumber][6]) {
+		//printf(" start inserting ");
+		bool same = 0;
+		for (int i = 0; i < idnumber; i++) {
+			if (list[i][0] == input[0]) {
+				list[i][5] = lifetimeextand + list[i][5];
+				same = 1;
+				//printf(" found same ");
+				printf("life time of No.%d at %d is %d ", list[i][0], i, list[i][5]);
+
+				if (list[i][5] > updatelimit) {
+					list[i][1] = input[1];
+					list[i][2] = input[2];
+					list[i][3] = input[3];
+					list[i][4] = input[4];
+				}
+			}
+		}
+
+		if (same == 0) {
+			//printf(" no same ");
+			for (int i = 0; i < idnumber; i++) {
+				if (list[i][0] == 99) {
+					//printf(" found umpty place ");
+					list[i][0] = input[0];
+					list[i][1] = input[1];
+					list[i][2] = input[2];
+					list[i][3] = input[3];
+					list[i][4] = input[4];
+					list[i][5] = lifetime;
+					//printf("No. %d inserted at %d ", input[0], i);
+					return;
+				}
+			}
+		}
+	}
+
+	void QRFrameProcessor::list_manager(int list[idnumber][6]) {
+		//printf(" start managing ");
+		for (int i = 0; i < idnumber; i++) {
+			if (list[i][0] != 99) {							
+
+				list[i][5]--; // life time -1 per frame
+				//printf(" No.%d -1,now is %d ", list[i][0], list[i][5]);
+
+				if (list[i][5] < 0) { // when life time < 0, we reset this array.
+					//printf(" No.%d expired ", list[i][0]);
+					list[i][0] = 99;
+					list[i][1] = 0;
+					list[i][2] = 0;
+					list[i][3] = 0;
+					list[i][4] = 0;
+					list[i][5] = 0;
+				}				
+			}
+		}
+	}
+
+
 	void QRFrameProcessor::processFrame(cv::Mat & colorFrame)
 	{
+		
+
+		// we crop the image to reduce the pixels
+		Mat temp_mat;
+		temp_mat = colorFrame.colRange(Range(800, 1400)); //x
+		temp_mat = temp_mat.rowRange(Range(300, 700)); // y
+		//temp_mat = colorFrame.colRange(Range(700, 1700)); //x
+		//temp_mat = temp_mat.rowRange(Range(300, 1000)); // y
+		temp_mat.copyTo(colorFrame);
+
+
 		// Creation of Intermediate 'Image' Objects required later
 		Mat gray(colorFrame.size(), CV_MAKETYPE(colorFrame.depth(), 1));			// To hold Grayscale Image
 		Mat edges(colorFrame.size(), CV_MAKETYPE(colorFrame.depth(), 1));			// To hold Grayscale Image
+
+	    Mat Traces =  Mat(colorFrame.size(), CV_8UC3);
+
+		list_manager(allinfo);
+
+		//imshow("colorFrame", colorFrame);
 
 		vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
@@ -516,6 +744,7 @@ namespace ar_sandbox
 		vector<Moments> mu(contours.size());
 		vector<Point2f> mc(contours.size());
 		//#pragma omp parallel for  
+#pragma omp parallel for  
 		for (int i = 0; i < contours.size(); i++)
 		{
 			mu[i] = moments(contours[i], false);
@@ -531,6 +760,7 @@ namespace ar_sandbox
 		for (int i = 0; i < idnumber / 3; i++)
 			qrcode[i][0] = -1;
 		//#pragma omp parallel for  
+#pragma omp parallel for  
 		for (int i = 0; i < contours.size(); i++)
 		{
 			//Find the approximated polygon of the contour we are examining
@@ -558,7 +788,8 @@ namespace ar_sandbox
 			float alldistance[idnumber][idnumber]; //theorical maxium size
 			float smalldistance = 9999;
 
-			//#pragma omp parallel for  
+			
+//#pragma omp parallel for  
 			for (int i = 0; i < mark; i++)  //actrual reading
 			{
 				for (int q = 0; q < mark; q++)
@@ -572,7 +803,8 @@ namespace ar_sandbox
 			//printf(" small dis = %f ", smalldistance);
 
 			int qrcounter = 0; //how many qr codes, should be mark/3
-							   //#pragma omp parallel for  		
+							  	
+//#pragma omp parallel for  			
 			for (int i = 0; i < mark; i++) //check all points
 			{
 				//alldistance[i][i] = -1;
@@ -637,9 +869,9 @@ namespace ar_sandbox
 			if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
 			{
 				//#pragma omp parallel for  
+#pragma omp parallel for  				
 				for (int i = 0; i < qrcounter; i++) {
 
-					//printf("");
 
 					float dist, slope;
 					int align, orientation;
@@ -697,8 +929,6 @@ namespace ar_sandbox
 						vector<Point2f> L, M, O, tempL, tempM, tempO;
 						Point2f N;
 
-
-
 						cv_getVertices(contours, top, slope, tempL);
 						cv_getVertices(contours, right, slope, tempM);
 						cv_getVertices(contours, bottom, slope, tempO);
@@ -711,17 +941,16 @@ namespace ar_sandbox
 
 						//threshold(qr_gray, qr_thres, 127, 255, CV_THRESH_BINARY);
 
-
 						//Draw contours on the image
 						drawContours(colorFrame, contours, top, Scalar(255, 200, 0), 2, 8, hierarchy, 0);
 						drawContours(colorFrame, contours, right, Scalar(0, 0, 255), 2, 8, hierarchy, 0);
 						drawContours(colorFrame, contours, bottom, Scalar(255, 0, 100), 2, 8, hierarchy, 0);
 
 
-						int DBG = 2;
+						int DBG = 0;
 						// Insert Debug instructions here
 						if (DBG == 1)
-						{
+						{					
 							// Debug Prints
 							// Visualizations for ease of understanding
 							if (slope > 5)
@@ -730,7 +959,7 @@ namespace ar_sandbox
 								circle(Traces, Point(10, 20), 5, Scalar(255, 255, 255), -1, 8, 0);
 
 							// Draw contours on Trace image for analysis	
-							drawContours(Traces, contours, top, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
+							drawContours(Traces, contours, top, Scalar(255, 0, 100,0), 1, 8, hierarchy, 0);
 							drawContours(Traces, contours, right, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
 							drawContours(Traces, contours, bottom, Scalar(255, 0, 100), 1, 8, hierarchy, 0);
 
@@ -741,7 +970,6 @@ namespace ar_sandbox
 							circle(Traces, L[3], 2, Scalar(128, 128, 128), -1, 8, 0);
 
 							//printf(" L0 x is  %d , L0 y is %d ", L[0].x, L[0].y);
-
 
 							circle(Traces, M[0], 2, Scalar(255, 255, 0), -1, 8, 0);
 							circle(Traces, M[1], 2, Scalar(0, 255, 0), -1, 8, 0);
@@ -764,12 +992,10 @@ namespace ar_sandbox
 
 							//int a = average_gray_scale(L[0], L[1], L[2], L[3], image);
 
-
 							// Draw the lines used for estimating the 4th Corner of QR Code
 							line(Traces, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
 							line(Traces, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
-
-
+							
 							// Debug Prints
 						}
 						else if (DBG == 2)
@@ -793,7 +1019,7 @@ namespace ar_sandbox
 							circle(colorFrame, L[3], 2, Scalar(128, 128, 128), -1, 8, 0);
 
 							//printf(" L0 x is  %d , L0 y is %d ", L[0].x, L[0].y);
-
+							
 
 							circle(colorFrame, M[0], 2, Scalar(255, 255, 0), -1, 8, 0);
 							circle(colorFrame, M[1], 2, Scalar(0, 255, 0), -1, 8, 0);
@@ -821,8 +1047,28 @@ namespace ar_sandbox
 							line(colorFrame, M[1], N, Scalar(0, 0, 255), 1, 8, 0);
 							line(colorFrame, O[3], N, Scalar(0, 0, 255), 1, 8, 0);
 						}
+
+						// int a = 0; // this is a landmark 
+						int codes[6];
+						int info_of_this_qr[5];
+
+						Mat testmat = qr_warper(L[0], M[1], N, O[3], colorFrame);
+
+						position_finder(L[0], M[1], O[3], info_of_this_qr);
+
+						code_digger(codes, testmat);
+
+						info_of_this_qr[0] = decoder(codes);	
+
+						list_insert(info_of_this_qr, allinfo);
 					}
 			}
 		}
+		//cv::resize(colorFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
+		colorFrame.copyTo(processedFrameMat);
+		// this is the monitor window to show color image.
+		Mat monitor(200, 135, CV_8UC3);
+		cv::resize(colorFrame, monitor, cv::Size(200, 135), 0, 0, cv::INTER_CUBIC);
+		imshow("monitor", monitor);
 	}
 }

@@ -11,9 +11,9 @@
 #include <opencv2\highgui\highgui.hpp>
 #include <iostream>
 
-#define RESIZE_WIDTH 1280
-#define RESIZE_HEIGHT 720
-
+#define RESIZE_WIDTH 1920
+#define RESIZE_HEIGHT 1080
+#define idnumber 30
 int main(int argc, char **argv)
 {
 
@@ -28,26 +28,85 @@ int main(int argc, char **argv)
 	BYTE *colorsp = nullptr;
 	int *intP = new int;
 
+	
+
+
+	int qrresults[30][6];
+	//for (int i = 0; i < 30; i++)
+	//{
+	//	for (int j = 0; j < 6; j++)
+	//	{
+	//		qrresults[i][j] = 99;
+	//	}
+	//}
+
 	initEnv();
+
+/*
+	int b[10];
+	for (int i = 0; i < 10; i++)
+	{
+		b[i] = 0;
+	}
+	testFun(&b);
+	for (int i = 0; i < 10; i++)
+	{
+		printf("%d ", b[i]);
+	}
+*/
+
 
 	for (;;)
 	{
 		updateSensor();
 		updateProcessor();
 		//updateHandTracker();
-
+	
 		//getContourFrame(&bp, intP);
-		//getDepthFrame(&depthsp, intP);
-		getColorFrame(&colorsp, intP);
+		getDepthFrame(&depthsp, intP);
+		//getColorFrame(&colorsp, intP);
+		getQRTraceFrame(&colorsp, intP);
+
+
+
+		//getQRResult(&qrresults);
+		/*if (getQRResult(&qrresults))
+		{
+			for (int i = 0; i < idnumber; i++) {
+				if (qrresults[i][0] != 99 && qrresults[i][0] >=0) {
+					printf(" data in all info : ");
+					for (int q = 0; q < 6; q++)
+					{
+						printf("%d ", qrresults[i][q]);
+					}
+				}
+			}
+		}*/
 
 		// Show all three frames in separate windows
-		//cv::Mat depthFrame(512, 512, CV_16U, depthsp);
+		//cv::Mat depthFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_16U, depthsp);
 		//imshow("Depth display", depthFrame);
 		//if (cv::waitKey(1) >= 0) break;
 
-		cv::Mat colorFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorsp);
-		imshow("Color display", colorFrame);
+		//cv::Mat copydepthFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC1);
+		//depthFrame.convertTo(copydepthFrame, CV_8SC1, 255.0 / 4500);
+		//imshow("2nd Depth display", copydepthFrame);
+		//if (cv::waitKey(1) >= 0) break;
+
+
+		//for (int i = 0; i < depthFrame.rows; i++)
+		//{
+		//	uchar * ptr = depthFrame.ptr<uchar>(i);
+		//	//uchar * pButterRun = (uchar*);
+		//}
+		//printf("",depthFrame.);
+
+
+
+		//cv::Mat colorFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorsp);
+		//imshow("Color display", colorFrame);
 		if (cv::waitKey(1) >= 0) break;
+
 
 
 		/*cv::Mat contourFrame(512, 512, CV_8UC3, bp);
