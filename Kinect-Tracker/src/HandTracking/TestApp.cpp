@@ -1,7 +1,7 @@
 // This is basically a run through of the Unity version
 
 #define DO_TEST_APP
-
+#include<omp.h>
 #if defined(DO_TEST_APP)
 #include <Unity.h>
 #else
@@ -16,6 +16,30 @@
 #define idnumber 30
 int main(int argc, char **argv)
 {
+	omp_set_num_threads(omp_get_max_threads()-1);
+//#pragma omp parallel
+//	{
+//		printf("In the app is parallel ! \n");
+//		
+//	}
+//#pragma omp parallel sections num_threads(4)
+//	{
+//#pragma omp section
+//		{
+//			printf(" \n Num threads: %d \n", omp_get_thread_num());
+//		}
+//#pragma omp section
+//		{
+//			printf(" \n Num threads: %d \n", omp_get_thread_num());
+//		}
+//#pragma omp section
+//		{
+//			printf(" \n Num threads: %d \n", omp_get_thread_num());
+//		}
+//	}
+
+
+
 
 #if defined(DO_TEST_APP)
 

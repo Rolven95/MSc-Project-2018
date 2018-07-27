@@ -322,6 +322,7 @@ namespace ar_sandbox
 	//	for all 4 regions we obtain the 4 corners of the polygon ( - quadrilateral).
 	void QRFrameProcessor::cv_getVertices(vector<vector<Point> > contours, int c_id, float slope, vector<Point2f>& quad)
 	{
+		
 		Rect box;
 		box = boundingRect(contours[c_id]);
 
@@ -359,8 +360,6 @@ namespace ar_sandbox
 
 		if (slope > 5 || slope < -5)
 		{
-
-#pragma omp parallel for  
 			for (int i = 0; i < contours[c_id].size(); i++)
 			{
 				pd1 = cv_lineEquation(C, A, contours[c_id][i]);	// Position of point w.r.t the diagonal AC 
@@ -390,7 +389,7 @@ namespace ar_sandbox
 		{
 			int halfx = (A.x + B.x) / 2;
 			int halfy = (A.y + D.y) / 2;
-#pragma omp parallel for  
+ 
 			for (int i = 0; i < contours[c_id].size(); i++)
 			{
 				if ((contours[c_id][i].x < halfx) && (contours[c_id][i].y <= halfy))
@@ -546,14 +545,8 @@ namespace ar_sandbox
 		int r_points[4] = { row / 25 * 7, row / 25 * (7 + 2) ,row / 25 * (7 + 2 + 7) ,row / 25 * (7 + 2 + 7 + 2) };
 		Mat temp_mat;
 
-		//this is area 0; 
-
-
 		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
-		temp_mat = temp_mat.rowRange(Range(0, r_points[0])); // y
-
-
-
+		temp_mat = temp_mat.rowRange(Range(0, r_points[0])); // 
 
 		if (average_gray_scale(temp_mat) < blackorwhite)
 			code[0] = 1;
@@ -575,7 +568,7 @@ namespace ar_sandbox
 			code[2] = 1;
 		else
 			code[2] = 0;
-
+    
 		//this is area 3; 
 		temp_mat = qr.colRange(Range(c_points[3], col)); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
@@ -583,7 +576,7 @@ namespace ar_sandbox
 			code[3] = 1;
 		else
 			code[3] = 0;
-
+	
 		//this is area 4; 
 		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[3], row)); // y
@@ -599,6 +592,7 @@ namespace ar_sandbox
 			code[5] = 1;
 		else
 			code[5] = 0;
+	
 	}
 
 	int QRFrameProcessor::decoder(int code[]) {
@@ -625,7 +619,7 @@ namespace ar_sandbox
 		//printf("col is %d ", xmax);
 		//printf("row is %d ", ymax);
 		//printf("gray is %d ", int(graph.at<uchar>(0, 0)));
-#pragma omp parallel for  
+//#pragma omp parallel for  
 		//to do:
 		for (int x = 0; x < xmax; x++) {
 			for (int y = 0; y < ymax; y++) {
@@ -733,18 +727,18 @@ namespace ar_sandbox
 
 														//uchar pixel_value = gray.ptr<uchar>(10)[10];
 														//printf(" point gray is: %d ", pixel_value);
-
-		Canny(gray, edges, 100, 200, 3);		// Apply Canny edge detection on the gray image
 		blur(gray, gray, Size(1, 1));
+		Canny(gray, edges, 100, 200, 3);		// Apply Canny edge detection on the gray image	
 		findContours(edges, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE); // Find contours with hierarchy
+
 
 		mark = 0;								// Reset all detected marker count for this frame
 		mapcounter = 0;
 		// Get Moments for all Contours and the mass centers
 		vector<Moments> mu(contours.size());
 		vector<Point2f> mc(contours.size());
-		//#pragma omp parallel for  
-#pragma omp parallel for  
+		
+#pragma omp parallel for		
 		for (int i = 0; i < contours.size(); i++)
 		{
 			mu[i] = moments(contours[i], false);
@@ -759,8 +753,7 @@ namespace ar_sandbox
 			id[i] = -1;
 		for (int i = 0; i < idnumber / 3; i++)
 			qrcode[i][0] = -1;
-		//#pragma omp parallel for  
-#pragma omp parallel for  
+ 
 		for (int i = 0; i < contours.size(); i++)
 		{
 			//Find the approximated polygon of the contour we are examining
@@ -789,7 +782,7 @@ namespace ar_sandbox
 			float smalldistance = 9999;
 
 			
-//#pragma omp parallel for  
+#pragma omp parallel for   
 			for (int i = 0; i < mark; i++)  //actrual reading
 			{
 				for (int q = 0; q < mark; q++)
@@ -803,8 +796,7 @@ namespace ar_sandbox
 			//printf(" small dis = %f ", smalldistance);
 
 			int qrcounter = 0; //how many qr codes, should be mark/3
-							  	
-//#pragma omp parallel for  			
+							  	 			
 			for (int i = 0; i < mark; i++) //check all points
 			{
 				//alldistance[i][i] = -1;
@@ -813,10 +805,12 @@ namespace ar_sandbox
 					int min2 = -1;
 
 					for (int m = 0; m < mark; m++) { //give min1 and min2 initial value, non-zero value
+												
 						if (min1 == -1 && m != i  && alldistance[m][0] != -1)
 							min1 = m;
 						else if (min2 == -1 && m != i  && alldistance[m][0] != -1)
 							min2 = m;
+					
 					}
 					if (min1 == -1 || min2 == -1) {
 						//printf(" not enough ");
@@ -832,6 +826,7 @@ namespace ar_sandbox
 						}
 					}
 
+					
 					if (alldistance[i][min1] > smalldistance * 1.6 || alldistance[i][min2] > smalldistance * 1.6) {
 						//printf(" wrong ");
 						continue;
@@ -855,24 +850,28 @@ namespace ar_sandbox
 					{
 						qrcode[qrcounter][0] = id[i]; qrcode[qrcounter][1] = id[min1]; qrcode[qrcounter][2] = id[min2];
 					}
+					
+					
+					if (alldistance[i][0] == -1 || alldistance[min1][0] == -1 || alldistance[min2][0] == -1) {
+						continue;
+					}
+					else {
+						alldistance[i][0] = -1;
+						alldistance[min1][0] = -1;
+						alldistance[min2][0] = -1;
+						qrcounter++;
+					}
+					
 
-					alldistance[i][0] = -1;
-					alldistance[min1][0] = -1;
-					alldistance[min2][0] = -1;
-
-					qrcounter++;
 				}
 			}
 
 
-
 			if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
 			{
-				//#pragma omp parallel for  
-#pragma omp parallel for  				
+				//printf("\n max is %d\n", omp_get_max_threads());
+#pragma omp parallel for 			
 				for (int i = 0; i < qrcounter; i++) {
-
-
 					float dist, slope;
 					int align, orientation;
 					int top, right, bottom, median1, median2, outlier;
@@ -1067,8 +1066,10 @@ namespace ar_sandbox
 		//cv::resize(colorFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
 		colorFrame.copyTo(processedFrameMat);
 		// this is the monitor window to show color image.
-		Mat monitor(200, 135, CV_8UC3);
-		cv::resize(colorFrame, monitor, cv::Size(200, 135), 0, 0, cv::INTER_CUBIC);
+		//Mat monitor(200, 135, CV_8UC3);
+		//cv::resize(colorFrame, monitor, cv::Size(200, 135), 0, 0, cv::INTER_CUBIC);
+		Mat monitor;
+		colorFrame.copyTo(monitor);
 		imshow("monitor", monitor);
 	}
 }
