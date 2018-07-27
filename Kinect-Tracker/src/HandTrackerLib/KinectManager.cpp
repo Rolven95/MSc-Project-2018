@@ -1064,8 +1064,8 @@ namespace ar_sandbox
 					}
 			}
 		}
-		cv::resize(colorFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
-
+		//cv::resize(colorFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
+		colorFrame.copyTo(processedFrameMat);
 		// this is the monitor window to show color image.
 		Mat monitor(200, 135, CV_8UC3);
 		cv::resize(colorFrame, monitor, cv::Size(200, 135), 0, 0, cv::INTER_CUBIC);

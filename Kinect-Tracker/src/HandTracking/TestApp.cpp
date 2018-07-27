@@ -103,8 +103,8 @@ int main(int argc, char **argv)
 
 
 
-		cv::Mat colorFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorsp);
-		imshow("Color display", colorFrame);
+		//cv::Mat colorFrame(RESIZE_HEIGHT, RESIZE_WIDTH, CV_8UC4, colorsp);
+		//imshow("Color display", colorFrame);
 		if (cv::waitKey(1) >= 0) break;
 
 
