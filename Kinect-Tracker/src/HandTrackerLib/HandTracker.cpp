@@ -34,11 +34,11 @@ namespace ar_sandbox
 		int height = frameDimensions.height;
 
 		// allocate buffers
-		grayBuffer = boost::make_shared<float[]>(height * width); // 1 channel gray buffer gray buffer
-		processedBuffer = boost::make_shared<unsigned char[]>(height * width * 3); // 3 Channel contour map buffer
-		maxThresholdBuffer = boost::make_shared<float[]>(height * width); // Buffer for the thresholded data
-		minThresholdBuffer = boost::make_shared<float[]>(height * width); // Buffer for the thresholded data
-		minMaxANDThresholdBuffer = boost::make_shared<unsigned char[]>(height * width);
+		grayBuffer = boost::make_shared<float[]>(width * height); // 1 channel gray buffer gray buffer
+		processedBuffer = boost::make_shared<unsigned char[]>(width * height * 3); // 3 Channel contour map buffer
+		maxThresholdBuffer = boost::make_shared<float[]>(width * height); // Buffer for the thresholded data
+		minThresholdBuffer = boost::make_shared<float[]>(width * height); // Buffer for the thresholded data
+		minMaxANDThresholdBuffer = boost::make_shared<unsigned char[]>(width * height);
 
 		// Set the Matrices
 		processedFrameMat = cv::Mat(height, width, CV_8UC3, processedBuffer.get());

@@ -133,6 +133,9 @@ public class HandTracker : MonoBehaviour
 
     private Texture2D cameraFrame;
 
+    //This is the UI reference
+    public GameObject Plane;
+    
     // Use this for initialization
     void Start()
     {
