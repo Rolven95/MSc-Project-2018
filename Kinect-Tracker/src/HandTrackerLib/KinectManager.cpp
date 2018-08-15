@@ -4,7 +4,7 @@
 #include "KinectManager.h"
 #include <cmath>
 #include <omp.h>
-
+#include <stdlib.h>
 
 using namespace ar_sandbox;
 using namespace cv;
@@ -19,6 +19,8 @@ using namespace std;
 #define lifetimeextand 5
 #define updatelimit 10
 
+#define cropImage_width 1000 //to reduce the processed pixels and increase the FPS
+#define cropImage_height 800
 
 namespace ar_sandbox
 {
@@ -539,59 +541,100 @@ namespace ar_sandbox
 	}
 
 	void QRFrameProcessor::code_digger(int code[], Mat qr) {
-		int col =  qr.rows;//x
-		int row =  qr.cols;//y
-		int c_points[4] = { col / 25 * 7, col / 25 * (7 + 2) ,col / 25 * (7 + 2 + 7) ,col / 25 * (7 + 2 + 7 + 2) };
-		int r_points[4] = { row / 25 * 7, row / 25 * (7 + 2) ,row / 25 * (7 + 2 + 7) ,row / 25 * (7 + 2 + 7 + 2) };
-		Mat temp_mat;
+		int cutcol = qr.rows * 0.93;//x
+		int cutrow = qr.cols * 0.93;//y
+		int NewEdge = qr.cols * 0.07;
+		
+		Mat NewCut;
+		NewCut = qr.colRange(Range(NewEdge, cutcol)); //x
+		NewCut = NewCut.rowRange(Range(NewEdge, cutrow)); // 
+		int col = NewCut.rows;//x
+		int row = NewCut.cols;//y
+		//printf("row=%d, col=%d", col, row);
+		//imshow("",NewCut);
 
-		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		int c_points[4] = { col  * 8/ 26 , col * (8 + 1)/ 26   , col * (8 + 1 + 8)/ 26   ,col * (8 + 1 + 8 + 1)/ 26 };
+		int r_points[4] = { row * 8/ 26, row  * (8 + 1)/ 26  , row * (8 + 1 + 8)/ 26  ,row * (8 + 1 + 8 + 1)/ 26 };
+		
+		/*int c_points[4] = { col  * 8/ 26+ NewEdge , col * (8 + 1)/ 26 + NewEdge  , col * (8 + 1 + 8)/ 26 + NewEdge   ,col * (8 + 1 + 8 + 1)/ 26 + NewEdge };
+		int r_points[4] = { row * 8/ 26 + NewEdge  , row  * (8 + 1)/ 26 + NewEdge , row * (8 + 1 + 8)/ 26 + NewEdge   ,row * (8 + 1 + 8 + 1)/ 26 + NewEdge };
+		*/
+		/*int c_points[4] = { col / 26 * 8 - NewEdge, col / 26 * (8 + 1) + NewEdge, col / 26 * (8 + 1 + 8) - NewEdge ,col / 26 * (8 + 1 + 8 + 1) + NewEdge };
+		int r_points[4] = { row / 26 * 8 - NewEdge, row / 26 * (8 + 1) + NewEdge, row / 26 * (8 + 1 + 8) - NewEdge ,row / 26 * (8 + 1 + 8 + 1) + NewEdge };*/
+		
+		Mat temp_mat;
+		temp_mat = NewCut.colRange(Range(c_points[1], c_points[2])); //x
 		temp_mat = temp_mat.rowRange(Range(0, r_points[0])); // 
 
 		if (average_gray_scale(temp_mat) < blackorwhite)
 			code[0] = 1;
 		else
 			code[0] = 0;
-
+		//imshow("0", temp_mat);
+		//waitKey(20);
 		//this is area 1; 
-		temp_mat = qr.colRange(Range(0, c_points[0])); //x
+		temp_mat = NewCut.colRange(Range(0, c_points[0])); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
 		if (average_gray_scale(temp_mat) < blackorwhite)
 			code[1] = 1;
 		else
 			code[1] = 0;
-
+		//imshow("1", temp_mat);
+		//waitKey(20);
 		//this is area 2; 
-		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		temp_mat = NewCut.colRange(Range(c_points[1], c_points[2])); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
 		if (average_gray_scale(temp_mat) < blackorwhite)
 			code[2] = 1;
 		else
 			code[2] = 0;
-    
+		//imshow("2", temp_mat);
+		//waitKey(20);
 		//this is area 3; 
-		temp_mat = qr.colRange(Range(c_points[3], col)); //x
+		temp_mat = NewCut.colRange(Range(c_points[3], col)); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[1], r_points[2])); // y
 		if (average_gray_scale(temp_mat) < blackorwhite)
 			code[3] = 1;
 		else
 			code[3] = 0;
-	
+		//imshow("3", temp_mat);
+		//waitKey(20);
 		//this is area 4; 
-		temp_mat = qr.colRange(Range(c_points[1], c_points[2])); //x
+		temp_mat = NewCut.colRange(Range(c_points[1], c_points[2])); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[3], row)); // y
 		if (average_gray_scale(temp_mat) < blackorwhite)
 			code[4] = 1;
 		else
 			code[4] = 0;
-
+		//imshow("4", temp_mat);
+		//waitKey(20);
 		//this is area 5; 
-		temp_mat = qr.colRange(Range(c_points[3], col)); //x
+		temp_mat = NewCut.colRange(Range(c_points[3], col)); //x
 		temp_mat = temp_mat.rowRange(Range(r_points[3], row)); // y
 		if (average_gray_scale(temp_mat) < blackorwhite)
 			code[5] = 1;
 		else
 			code[5] = 0;
+		//imshow("5", temp_mat);
+		//waitKey(20);
+
+		//for defult
+		temp_mat = NewCut.colRange(Range(0, c_points[0])); //x
+		temp_mat = temp_mat.rowRange(Range(0, r_points[0])); // y
+		//imshow("L", temp_mat);
+		//waitKey(20);
+
+		temp_mat = NewCut.colRange(Range(0, c_points[0])); //x
+		temp_mat = temp_mat.rowRange(Range(r_points[3], col)); // y
+		//imshow("M", temp_mat);
+		//waitKey(20);
+
+
+		temp_mat = NewCut.colRange(Range(c_points[3], row)); //x
+		temp_mat = temp_mat.rowRange(Range(0, r_points[0])); // y
+		//imshow("Oooo", temp_mat);
+		//waitKey(20);
+
 	
 	}
 
@@ -628,7 +671,9 @@ namespace ar_sandbox
 				//printf(" %d ", int(graph.at<uchar>(y, x)));
 			}
 		}
-		//printf("avg gray = %d " , total_gray_scale/(graph.rows*graph.cols));
+		//imshow("",input);
+		//waitKey(100);
+		printf("\navg gray = %d " , total_gray_scale/(graph.rows*graph.cols));
 		return total_gray_scale / (graph.rows*graph.cols);
 		//return 0;
 	}
@@ -691,15 +736,16 @@ namespace ar_sandbox
 		}
 	}
 
-
 	void QRFrameProcessor::processFrame(cv::Mat & colorFrame)
 	{
 		
 
 		// we crop the image to reduce the pixels
 		Mat temp_mat;
-		temp_mat = colorFrame.colRange(Range(800, 1400)); //x
-		temp_mat = temp_mat.rowRange(Range(300, 700)); // y
+
+		// we have measured the center point of the sandbox is (1100, 500)
+		temp_mat = colorFrame.colRange(Range( 1100 - cropImage_width/2, 1100 + cropImage_width/2)); //x
+		temp_mat = temp_mat.rowRange(Range(500 - cropImage_height/2, 500 + cropImage_height/2)); // y
 		//temp_mat = colorFrame.colRange(Range(700, 1700)); //x
 		//temp_mat = temp_mat.rowRange(Range(300, 1000)); // y
 		temp_mat.copyTo(colorFrame);
@@ -778,13 +824,14 @@ namespace ar_sandbox
 			}
 		}
 
-			float alldistance[idnumber][idnumber]; //theorical maxium size
-			float smalldistance = 9999;
+		
 
-			
+		float alldistance[idnumber][idnumber]; //theorical maxium size
+		float smalldistance = 9999;
+	
 #pragma omp parallel for   
-			for (int i = 0; i < mark; i++)  //actrual reading
-			{
+		for (int i = 0; i < mark; i++)  //actrual reading
+		{
 				for (int q = 0; q < mark; q++)
 				{
 					alldistance[i][q] = cv_distance(mc[id[i]], mc[id[q]]);
@@ -792,31 +839,28 @@ namespace ar_sandbox
 						smalldistance = alldistance[i][q];
 					//printf(" %d%d = %f ", i, q, alldistance[i][q]);
 				}
-			}
+		}
 			//printf(" small dis = %f ", smalldistance);
-
-			int qrcounter = 0; //how many qr codes, should be mark/3
-							  	 			
-			for (int i = 0; i < mark; i++) //check all points
-			{
+			
+		int qrcounter = 0; //how many qr codes, should be mark/3
+		
+		for (int i = 0; i < mark; i++ ) //check all points
+		{
+				
 				//alldistance[i][i] = -1;
 				if (alldistance[i][0] != -1) {
 					int min1 = -1;
 					int min2 = -1;
-
 					for (int m = 0; m < mark; m++) { //give min1 and min2 initial value, non-zero value
-												
+
 						if (min1 == -1 && m != i  && alldistance[m][0] != -1)
 							min1 = m;
 						else if (min2 == -1 && m != i  && alldistance[m][0] != -1)
 							min2 = m;
-					
 					}
-					if (min1 == -1 || min2 == -1) {
-						//printf(" not enough ");
+					if (min1 == -1 || min2 == -1) 						
 						continue;
-					}
-
+					
 					for (int q = i; q < mark; q++) {
 						if (alldistance[i][q] != -1 && alldistance[i][q] < alldistance[i][min1] && q != i && q != min2) {
 							min1 = q;
@@ -826,12 +870,10 @@ namespace ar_sandbox
 						}
 					}
 
-					
-					if (alldistance[i][min1] > smalldistance * 1.6 || alldistance[i][min2] > smalldistance * 1.6) {
-						//printf(" wrong ");
-						continue;
-					}
 
+					if (alldistance[i][min1] > smalldistance * 1.6 || alldistance[i][min2] > smalldistance * 1.6)
+						continue;
+					
 					float AB, BC, CA;//i=a min1 =b min2 =c
 					AB = alldistance[i][min1];
 					BC = alldistance[min1][min2];
@@ -850,8 +892,8 @@ namespace ar_sandbox
 					{
 						qrcode[qrcounter][0] = id[i]; qrcode[qrcounter][1] = id[min1]; qrcode[qrcounter][2] = id[min2];
 					}
-					
-					
+
+
 					if (alldistance[i][0] == -1 || alldistance[min1][0] == -1 || alldistance[min2][0] == -1) {
 						continue;
 					}
@@ -861,14 +903,11 @@ namespace ar_sandbox
 						alldistance[min2][0] = -1;
 						qrcounter++;
 					}
-					
-
 				}
-			}
-
-
-			if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
-			{
+				
+		}
+		if (qrcounter > 0)		// Ensure we have (atleast 3; namely A,B,C) 'Alignment Markers' discovered
+		{
 				//printf("\n max is %d\n", omp_get_max_threads());
 #pragma omp parallel for 			
 				for (int i = 0; i < qrcounter; i++) {
@@ -1066,10 +1105,10 @@ namespace ar_sandbox
 		//cv::resize(colorFrame, processedFrameMat, cv::Size(height, width), 0, 0, cv::INTER_CUBIC);
 		colorFrame.copyTo(processedFrameMat);
 		// this is the monitor window to show color image.
-		//Mat monitor(200, 135, CV_8UC3);
-		//cv::resize(colorFrame, monitor, cv::Size(200, 135), 0, 0, cv::INTER_CUBIC);
-		Mat monitor;
-		colorFrame.copyTo(monitor);
+		Mat monitor(cropImage_width/2, cropImage_height/2, CV_8UC3);
+		cv::resize(colorFrame, monitor, cv::Size(cropImage_width / 2, cropImage_height / 2), 0, 0, cv::INTER_CUBIC);
+		//Mat monitor;
+		//colorFrame.copyTo(monitor);
 		imshow("monitor", monitor);
 	}
 }
