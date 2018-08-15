@@ -6,7 +6,7 @@ using System;
 
 public class MainManager : MonoBehaviour
 {
-    public const int TotalNumber = 3;
+    public const int TotalNumber = 4;
 
     public int[] TemCurrentDegree;
     
@@ -57,10 +57,10 @@ public class MainManager : MonoBehaviour
     void Update()
     {
 
-
-      //  FrameCounter++;
+        //Object_List[1].transform.Rotate(new Vector3(0, 5, 0), rotateSpace);
+        //  FrameCounter++;
         //Debug.Log("Distance:");
-      //  TimeList[0] = System.DateTime.Now; 
+        //  TimeList[0] = System.DateTime.Now; 
         QR_Reader(allinfo);
        // TimeList[1] = System.DateTime.Now;
         Location_Updater(CurrentLocation, allinfo);
@@ -94,9 +94,9 @@ public class MainManager : MonoBehaviour
                 if (qrresult[i, 0] != 99 && Check_range(qrresult[i, 0]))
                 {
                     newdata[i][0] = qrresult[i, 0];
-                    newdata[i][1] = -1 * (qrresult[i, 1] / 6 - 50);
-                    newdata[i][2] = 0;
-                    newdata[i][3] = -1*(qrresult[i, 2] / 4 - 50);
+                    newdata[i][1] = -1 * (qrresult[i, 1] / 10-50);
+                    newdata[i][2] = newdata[i][2];
+                    newdata[i][3] = -1*(qrresult[i, 2] / 10-50);
                     newdata[i][4] = qrresult[i, 4];
                     Debug.Log("ID:" + qrresult[i, 0] + " " + qrresult[i, 1] + " " + qrresult[i,2] + " " + qrresult[i, 3] + " " + qrresult[i, 4] +" "+qrresult[i, 5]);
                     //Debug.Log("ID:"+newdata[i][0]+" " +newdata[i][1] + " " + newdata[i][2] + " " + newdata[i][3] + " " + newdata[i][4]);
@@ -117,7 +117,7 @@ public class MainManager : MonoBehaviour
                 //Debug.Log("QRinfo[i][0]: " + QRinfo[i][0]);
                 //Debug.Log("i=" + i);
                 Current[QRinfo[i][0]][0] = QRinfo[i][1];
-                Current[QRinfo[i][0]][1] = QRinfo[i][2];
+                //Current[QRinfo[i][0]][1] = QRinfo[i][2];
                 Current[QRinfo[i][0]][2] = QRinfo[i][3];
                 Current[QRinfo[i][0]][3] = QRinfo[i][4] - TemCurrentDegree[i];
 
@@ -139,7 +139,7 @@ public class MainManager : MonoBehaviour
     }
     void change_position(float[] Current, GameObject Objects) // 
     {
-        Objects.transform.position = new Vector3(Objects.transform.position.x /2 +  Current[0]/2, Objects.transform.position.y / 2+  Current[1]/2, Objects.transform.position.z /2 + Current[2]/2);
+        Objects.transform.position = new Vector3(Objects.transform.position.x /2 +  Current[0]/2, Objects.transform.position.y , Objects.transform.position.z /2 + Current[2]/2);
         Objects.transform.Rotate(new Vector3(0, Current[3], 0), rotateSpace);
         //Debug.Log("position changed");
     }
